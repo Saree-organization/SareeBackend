@@ -1,4 +1,14 @@
 package com.web.saree.reopository;
 
-public interface UserRepository {
+
+import com.web.saree.entity.Users;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<Users, Long> {
+    // To check if a user with this phone number already exists
+    Optional<Users> findByPhoneNumber(String phoneNumber);
 }
