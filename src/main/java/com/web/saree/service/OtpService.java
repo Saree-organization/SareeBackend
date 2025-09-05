@@ -1,12 +1,15 @@
 package com.web.saree.service;
 
-
 import com.web.saree.entity.Users;
 import com.web.saree.reopository.UserRepository;
+import com.web.saree.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.text.DecimalFormat;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
 
@@ -16,49 +19,70 @@ public class OtpService {
     @Autowired
     private UserRepository userRepository;
 
-    /**
-     * Generates a 6-digit OTP, saves it to the user's record in the database,
-     * and simulates sending it.
-     * @param phoneNumber The user's full phone number.
-     * @return The generated OTP.
-     */
-    public String generateAndSaveOtp(String phoneNumber) {
-        // Generate a 6-digit OTP
-        String otp = new DecimalFormat("000000").format(new Random().nextInt(999999));
+    @Autowired
+    private JwtUtils jwtUtils;
 
-        // Find user by phone number or create a new one if not exists
+    private static final long OTP_VALID_DURATION_MINUTES = 5;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    @Value("${msg91.authkey}")
+    private String authKey;
+
+    @Value("${msg91.otp.templateId}")
+    private String templateId;
+
+    public void generateAndSaveOtp(String phoneNumber) {
+        String otp = String.format("%06d", new Random().nextInt(999999));
+
         Users user = userRepository.findByPhoneNumber(phoneNumber)
                 .orElse(new Users());
 
         user.setPhoneNumber(phoneNumber);
         user.setOtp(otp);
+        user.setOtpGeneratedTime(LocalDateTime.now());
         userRepository.save(user);
 
-        // In a real application, integrate with an SMS gateway (e.g., Twilio) here.
-        System.out.println("Generated OTP for " + phoneNumber + " is: " + otp);
+        // ✅ Send OTP via MSG91 API
+        String url = "https://control.msg91.com/api/v5/otp?mobile=91" + phoneNumber
+                + "&authkey=" + authKey
+                + "&template_id=" + templateId
+                + "&otp=" + otp;
 
-        return otp;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+
+        if (response.getStatusCode() != HttpStatus.OK) {
+            throw new RuntimeException("Failed to send OTP via MSG91.");
+        }
     }
 
-    /**
-     * Verifies if the provided OTP matches the one stored in the database for the given phone number.
-     * @param phoneNumber The user's full phone number.
-     * @param otp The 6-digit OTP entered by the user.
-     * @return true if the OTP is valid, false otherwise.
-     */
-    public boolean verifyOtp(String phoneNumber, String otp) {
+    public String verifyOtpAndGenerateToken(String phoneNumber, String otp) {
         Optional<Users> userOptional = userRepository.findByPhoneNumber(phoneNumber);
 
-        if (userOptional.isPresent()) {
-            Users user = userOptional.get();
-            // Check if the provided OTP matches the one in the database
-            if (otp.equals(user.getOtp())) {
-                // For security, clear the OTP after successful verification
-                user.setOtp(null);
-                userRepository.save(user);
-                return true; // OTP is correct
-            }
+        if (userOptional.isEmpty()) {
+            throw new RuntimeException("User not found.");
         }
-        return false; // User not found or OTP is incorrect
+
+        Users user = userOptional.get();
+
+        if (user.getOtpGeneratedTime() == null ||
+                user.getOtpGeneratedTime().plusMinutes(OTP_VALID_DURATION_MINUTES).isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP has expired. Please request a new one.");
+        }
+
+        if (otp.equals(user.getOtp())) {
+            user.setOtp(null);
+            user.setOtpGeneratedTime(null);
+            userRepository.save(user);
+
+            return jwtUtils.generateTokenFromPhoneNumber(phoneNumber);
+        } else {
+            throw new RuntimeException("Invalid OTP.");
+        }
     }
 }
