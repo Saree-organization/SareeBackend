@@ -31,8 +31,3 @@ build/
 
 ### VS Code ###
 .vscode/
-# Application files ko git pe Push nhi karna hai
-
-
-src/main/resources/application-nikhil.properties
-src/main/resources/application-vishwas.properties
