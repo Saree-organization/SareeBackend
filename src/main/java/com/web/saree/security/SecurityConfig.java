@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/send-otp", "/api/auth/verify-otp").permitAll()
+                        .requestMatchers("/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
