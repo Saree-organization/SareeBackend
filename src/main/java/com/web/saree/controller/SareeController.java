@@ -53,47 +53,7 @@ public class SareeController {
             @RequestParam(value = "images", required = false) MultipartFile[] images,
             @RequestParam(value = "videos", required = false) MultipartFile[] videos
     ) {
-        try {
-            VariantRequest variant = new VariantRequest();
-            variant.setSkuCode(skuCode);
-            variant.setName(name);
-            variant.setColor(color);
-            variant.setSalesPrice(Double.parseDouble(salesPrice));
-            variant.setCostPrice(Double.parseDouble(costPrice));
-            variant.setDiscountPercent(Double.parseDouble(discountPercent));
-            variant.setStock(Integer.parseInt(stock));
-
-            // Upload Images immediately
-            if (images != null && images.length > 0) {
-                List<String> imageUrls = new ArrayList<> ();
-                for (MultipartFile image : images) {
-                    Map uploadResult = cloudinary.uploader().upload(
-                            image.getBytes(),
-                            ObjectUtils.asMap("folder", "Saree/Images")
-                    );
-
-                    imageUrls.add(uploadResult.get("url").toString());
-                }
-                variant.setImageUrls(imageUrls); // <-- store URLs, not MultipartFile
-            }
-
-            // Upload Video (only 1 allowed as per your rule)
-            if (videos != null && videos.length > 0) {
-                Map uploadResult = cloudinary.uploader().upload(
-                        videos[0].getBytes(),
-                        ObjectUtils.asMap("folder", "Saree/Videos", "resource_type", "video")
-                );
-
-                variant.setVideoUrl(uploadResult.get("url").toString()); // <-- single video URL
-            }
-
-            sareeRequest.getVariants().add(variant);
-            System.out.println("Step 2: Variant object created with uploaded files");
-            return ResponseEntity.ok("Variant added successfully");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error adding variant: " + e.getMessage());
-        }
+    return  sareeService.addVariant(sareeRequest,skuCode, name, color, salesPrice, costPrice, discountPercent, stock, images, videos);
     }
 
 
