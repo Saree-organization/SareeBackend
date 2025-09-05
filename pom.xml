@@ -50,6 +50,7 @@
             <scope>test</scope>
         </dependency>
 
+<<<<<<< HEAD
         <!-- CLOUDINARY -->
         <dependency>
             <groupId>com.cloudinary</groupId>
@@ -64,6 +65,13 @@
             <version>1.18.30</version>
         </dependency>
 
+=======
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+>>>>>>> 667dac29e58b109b0dd0896e493fd2cd2bba56d0
     </dependencies>
 
     <build>
