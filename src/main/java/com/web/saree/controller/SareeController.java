@@ -21,23 +21,23 @@ import java.util.Map;
 public class SareeController {
     private final Cloudinary cloudinary;
     private final SareeService sareeService;
-    private SareeRequest sareeRequest = new SareeRequest();
+    private SareeRequest sareeRequest = new SareeRequest ();
 
     @PostMapping("/addSareeDetails")
     public ResponseEntity<?> addSareeDetails(@RequestBody Map<String, Object> data) {
         try {
-            sareeRequest.setFabrics((String) data.get("fabrics"));
-            sareeRequest.setDesign((String) data.get("design"));
-            sareeRequest.setLength(Double.parseDouble(data.get("length").toString()));
-            sareeRequest.setDescription((String) data.get("description"));
-            sareeRequest.setBorder((String) data.get("border"));
-            sareeRequest.setCategory((String) data.get("category"));
-            sareeRequest.setWeight(Double.parseDouble(data.get("weight").toString()));
+            sareeRequest.setFabrics ((String) data.get ("fabrics"));
+            sareeRequest.setDesign ((String) data.get ("design"));
+            sareeRequest.setLength (Double.parseDouble (data.get ("length").toString ()));
+            sareeRequest.setDescription ((String) data.get ("description"));
+            sareeRequest.setBorder ((String) data.get ("border"));
+            sareeRequest.setCategory ((String) data.get ("category"));
+            sareeRequest.setWeight (Double.parseDouble (data.get ("weight").toString ()));
             System.out.println ("Step 1: SareeRequest object created");
-            return ResponseEntity.ok("Step 1 saved");
+            return ResponseEntity.ok ("Step 1 saved");
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error in step 1");
+            e.printStackTrace ();
+            return ResponseEntity.status (500).body ("Error in step 1");
         }
     }
 
@@ -53,16 +53,36 @@ public class SareeController {
             @RequestParam(value = "images", required = false) MultipartFile[] images,
             @RequestParam(value = "videos", required = false) MultipartFile[] videos
     ) {
-    return  sareeService.addVariant(sareeRequest,skuCode, name, color, salesPrice, costPrice, discountPercent, stock, images, videos);
+        return sareeService.addVariant (sareeRequest, skuCode, name, color, salesPrice, costPrice, discountPercent, stock, images, videos);
     }
 
 
     @PostMapping("/addSaree")
     public ResponseEntity<?> finalSave() {
         try {
-            return sareeService.addSaree(sareeRequest);
+            return sareeService.addSaree (sareeRequest);
         } finally {
-            sareeRequest = new SareeRequest(); // reset after save
+            sareeRequest = new SareeRequest (); // reset after save
+        }
+    }
+
+    @GetMapping("/allSarees")
+    private ResponseEntity<?> getAllSarees() {
+        try {
+            return ResponseEntity.ok (sareeService.getAllSarees ());
+        } catch (Exception e) {
+            e.printStackTrace ();
+            return ResponseEntity.status (500).body ("Error in getting all sarees");
+        }
+    }
+
+    @GetMapping("/{id}")
+    private ResponseEntity<?> getSareeById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok (sareeService.getSareeById (id));
+        } catch (Exception e) {
+            e.printStackTrace ();
+            return ResponseEntity.status (500).body ("Error in getting saree by id");
         }
     }
 }

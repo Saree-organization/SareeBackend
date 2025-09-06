@@ -32,9 +32,14 @@ build/
 ### VS Code ###
 .vscode/
 
+<<<<<<< HEAD
+### ignore application specific files ###
+src/main/resources/application.properties
+
+=======
 # APPLICATION FILES
 
-src/main/resources/application-nikhil.properties
-src/main/resources/application-vishwas.properties
+
 
 # git
+>>>>>>> f32f1c12bd66dd17182ca5cca41b16a205c662d1
