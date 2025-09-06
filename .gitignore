@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# APPLICATION FILES
+
+src/main/resources/application-nikhil.properties
+src/main/resources/application-vishwas.properties
+
+# git
