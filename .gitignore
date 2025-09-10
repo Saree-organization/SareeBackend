@@ -32,14 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 
-<<<<<<< HEAD
 ### ignore application specific files ###
 src/main/resources/application.properties
 
-=======
 # APPLICATION FILES
 
 
 
 # git
->>>>>>> f32f1c12bd66dd17182ca5cca41b16a205c662d1

@@ -5,9 +5,7 @@ import com.web.saree.reopository.UserRepository;
 import com.web.saree.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -24,13 +22,17 @@ public class OtpService {
 
     private static final long OTP_VALID_DURATION_MINUTES = 5;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    // The Twilio credentials are no longer used for sending OTP,
+    // but the @Value annotations are kept here to avoid errors
+    // if other parts of the application still expect them.
+    @Value("${twilio.account.sid}")
+    private String accountSid;
 
-    @Value("${msg91.authkey}")
-    private String authKey;
+    @Value("${twilio.auth.token}")
+    private String authToken;
 
-    @Value("${msg91.otp.templateId}")
-    private String templateId;
+    @Value("${twilio.phone.number}")
+    private String twilioPhoneNumber;
 
     public void generateAndSaveOtp(String phoneNumber) {
         String otp = String.format("%06d", new Random().nextInt(999999));
@@ -43,22 +45,9 @@ public class OtpService {
         user.setOtpGeneratedTime(LocalDateTime.now());
         userRepository.save(user);
 
-        // ✅ Send OTP via MSG91 API
-        String url = "https://control.msg91.com/api/v5/otp?mobile=91" + phoneNumber
-                + "&authkey=" + authKey
-                + "&template_id=" + templateId
-                + "&otp=" + otp;
+        // ✅ Instead of sending the OTP via Twilio, it is now printed to the console.
+        System.out.println("Generated OTP for " + phoneNumber + ": " + otp);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> entity = new HttpEntity<>(null, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-
-        if (response.getStatusCode() != HttpStatus.OK) {
-            throw new RuntimeException("Failed to send OTP via MSG91.");
-        }
     }
 
     public String verifyOtpAndGenerateToken(String phoneNumber, String otp) {
