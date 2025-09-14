@@ -18,12 +18,12 @@ public class AuthController {
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> payload) {
         try {
-            String phoneNumber = payload.get("phoneNumber");
-            if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Phone number is required."));
+            String email = payload.get("email"); // Changed from phoneNumber
+            if (email == null || email.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Email is required."));
             }
 
-            otpService.generateAndSaveOtp(phoneNumber);
+            otpService.generateAndSaveOtp(email); // Changed method call
             return ResponseEntity.ok(Map.of("message", "OTP sent successfully!"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("message", "An error occurred: " + e.getMessage()));
@@ -33,7 +33,7 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         try {
-            String jwt = otpService.verifyOtpAndGenerateToken(request.getPhoneNumber(), request.getOtp());
+            String jwt = otpService.verifyOtpAndGenerateToken(request.getEmail(), request.getOtp()); // Changed method call and DTO getter
             return ResponseEntity.ok(Map.of("message", "OTP verified successfully!", "token", jwt));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

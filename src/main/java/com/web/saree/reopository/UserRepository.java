@@ -1,3 +1,5 @@
+// File: com/web/saree/reopository/UserRepository.java
+
 package com.web.saree.reopository;
 
 import com.web.saree.entity.Users;
@@ -8,5 +10,5 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<Users, Long> {
-    Optional<Users> findByPhoneNumber(String phoneNumber);
+    Optional<Users> findByEmail(String email); // Changed from findByPhoneNumber
 }
