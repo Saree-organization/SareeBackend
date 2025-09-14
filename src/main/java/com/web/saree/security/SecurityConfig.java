@@ -41,7 +41,11 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/**").permitAll() // This single line is enough to permit all requests
+                        // Permit all requests to your authentication endpoints
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // Permit other public endpoints
+                        .requestMatchers("/public/**", "/images/**").permitAll()
+                        // Require authentication for all other requests
                         .anyRequest().authenticated()
                 );
 
@@ -55,7 +59,7 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("*"); // <-- Changed to allow any origin
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
