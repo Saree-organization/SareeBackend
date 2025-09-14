@@ -1,3 +1,5 @@
+// File: com/web/saree/security/JwtUtils.java
+
 package com.web.saree.security;
 
 import io.jsonwebtoken.*;
@@ -27,25 +29,25 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
-    public String generateTokenFromPhoneNumber(String phoneNumber) {
+    public String generateTokenFromEmail(String email) { // Changed method name and parameter
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(phoneNumber)
+                .setSubject(email) // Changed to use email
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime() + jwtExpirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String getPhoneNumberFromToken(String token) {
+    public String getEmailFromToken(String token) { // Changed method name
         return extractClaim(token, Claims::getSubject);
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
         try {
-            final String phoneNumber = getPhoneNumberFromToken(token);
-            return (phoneNumber.equals(userDetails.getUsername()) && !isTokenExpired(token));
+            final String email = getEmailFromToken(token); // Changed method call
+            return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
         } catch (Exception e) {
             System.err.println("Token validation failed: " + e.getMessage());
             return false;
@@ -68,7 +70,7 @@ public class JwtUtils {
     private Claims extractAllClaims(String token) {
         try {
             return Jwts.parser()
-                    .verifyWith((SecretKey) key()) // Note: verifyWith replaces setSigningKey in 0.12.x
+                    .verifyWith((SecretKey) key())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();

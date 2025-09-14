@@ -1,3 +1,5 @@
+// File: com/web/saree/security/JwtAuthFilter.java
+
 package com.web.saree.security;
 
 import jakarta.servlet.FilterChain;
@@ -30,15 +32,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
         String token = null;
-        String phoneNumber = null;
+        String email = null; // Changed from phoneNumber
 
         if (header != null && header.startsWith("Bearer ")) {
             token = header.substring(7);
-            phoneNumber = jwtUtils.getPhoneNumberFromToken(token);
+            email = jwtUtils.getEmailFromToken(token); // Changed method call
         }
 
-        if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(phoneNumber);
+        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
             if (jwtUtils.validateToken(token, userDetails)) {
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());

@@ -1,10 +1,11 @@
+// File: com/web/saree/service/OtpService.java
+
 package com.web.saree.service;
 
 import com.web.saree.entity.Users;
 import com.web.saree.reopository.UserRepository;
 import com.web.saree.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,38 +21,28 @@ public class OtpService {
     @Autowired
     private JwtUtils jwtUtils;
 
+    @Autowired
+    private EmailService emailService; // Inject the new service
+
     private static final long OTP_VALID_DURATION_MINUTES = 5;
 
-    // The Twilio credentials are no longer used for sending OTP,
-    // but the @Value annotations are kept here to avoid errors
-    // if other parts of the application still expect them.
-    @Value("${twilio.account.sid}")
-    private String accountSid;
-
-    @Value("${twilio.auth.token}")
-    private String authToken;
-
-    @Value("${twilio.phone.number}")
-    private String twilioPhoneNumber;
-
-    public void generateAndSaveOtp(String phoneNumber) {
+    public void generateAndSaveOtp(String email) {
         String otp = String.format("%06d", new Random().nextInt(999999));
 
-        Users user = userRepository.findByPhoneNumber(phoneNumber)
+        Users user = userRepository.findByEmail(email)
                 .orElse(new Users());
 
-        user.setPhoneNumber(phoneNumber);
+        user.setEmail(email);
         user.setOtp(otp);
         user.setOtpGeneratedTime(LocalDateTime.now());
         userRepository.save(user);
 
-        // ✅ Instead of sending the OTP via Twilio, it is now printed to the console.
-        System.out.println("Generated OTP for " + phoneNumber + ": " + otp);
-
+        emailService.sendOtpEmail(email, otp); // Send OTP via email
+        System.out.println("Generated OTP for " + email + ": " + otp);
     }
 
-    public String verifyOtpAndGenerateToken(String phoneNumber, String otp) {
-        Optional<Users> userOptional = userRepository.findByPhoneNumber(phoneNumber);
+    public String verifyOtpAndGenerateToken(String email, String otp) {
+        Optional<Users> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isEmpty()) {
             throw new RuntimeException("User not found.");
@@ -69,7 +60,7 @@ public class OtpService {
             user.setOtpGeneratedTime(null);
             userRepository.save(user);
 
-            return jwtUtils.generateTokenFromPhoneNumber(phoneNumber);
+            return jwtUtils.generateTokenFromEmail(email); // Use new method
         } else {
             throw new RuntimeException("Invalid OTP.");
         }
