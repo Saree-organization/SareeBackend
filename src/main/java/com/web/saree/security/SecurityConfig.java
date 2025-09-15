@@ -43,9 +43,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Permit all requests to your authentication endpoints and the public sarees endpoint
-                        .requestMatchers("/api/auth/**", "/sarees/allSarees").permitAll()
+                        .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
                         // Permit other public endpoints
-                        .requestMatchers("/public/**", "/images/**").permitAll()
                         // Require authentication for all other requests
                         .anyRequest().authenticated()
                 );
@@ -62,7 +61,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         // Correctly list the origins of your frontend client
-        config.setAllowedOrigins(Arrays.asList("*"));
+        config.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         source.registerCorsConfiguration("/**", config);
