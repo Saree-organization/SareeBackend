@@ -18,12 +18,12 @@ public class AuthController {
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> payload) {
         try {
-            String email = payload.get("email"); // Changed from phoneNumber
+            String email = payload.get("email");
             if (email == null || email.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Email is required."));
             }
 
-            otpService.generateAndSaveOtp(email); // Changed method call
+            otpService.generateAndSaveOtp(email);
             return ResponseEntity.ok(Map.of("message", "OTP sent successfully!"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("message", "An error occurred: " + e.getMessage()));
@@ -33,7 +33,7 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         try {
-            String jwt = otpService.verifyOtpAndGenerateToken(request.getEmail(), request.getOtp()); // Changed method call and DTO getter
+            String jwt = otpService.verifyOtpAndGenerateToken(request.getEmail(), request.getOtp());
             return ResponseEntity.ok(Map.of("message", "OTP verified successfully!", "token", jwt));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

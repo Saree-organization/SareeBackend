@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/sarees")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5175")
+@CrossOrigin(origins = "http://localhost:5173")
 public class SareeController {
     private final Cloudinary cloudinary;
     private final SareeService sareeService;
