@@ -1,5 +1,3 @@
-// File: com/web/saree/service/OtpService.java
-
 package com.web.saree.service;
 
 import com.web.saree.entity.Users;
@@ -22,7 +20,7 @@ public class OtpService {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private EmailService emailService; // Inject the new service
+    private EmailService emailService;
 
     private static final long OTP_VALID_DURATION_MINUTES = 5;
 
@@ -37,7 +35,7 @@ public class OtpService {
         user.setOtpGeneratedTime(LocalDateTime.now());
         userRepository.save(user);
 
-        emailService.sendOtpEmail(email, otp); // Send OTP via email
+        emailService.sendOtpEmail(email, otp);
         System.out.println("Generated OTP for " + email + ": " + otp);
     }
 
@@ -60,7 +58,7 @@ public class OtpService {
             user.setOtpGeneratedTime(null);
             userRepository.save(user);
 
-            return jwtUtils.generateTokenFromEmail(email); // Use new method
+            return jwtUtils.generateTokenFromEmail(email);
         } else {
             throw new RuntimeException("Invalid OTP.");
         }
