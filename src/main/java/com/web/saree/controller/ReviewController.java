@@ -30,4 +30,8 @@ public class ReviewController {
            review.setUserGmail (principal.getName ());
            return  reviewService.addReview(review);
     }
+    @GetMapping("/avgRating/{id}")
+    public ResponseEntity<?> getRating(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(reviewService.getAvgRating(id));
+    }
 }
