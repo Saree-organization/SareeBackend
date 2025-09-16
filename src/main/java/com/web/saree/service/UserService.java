@@ -1,5 +1,6 @@
 package com.web.saree.service;
 
+
 import com.web.saree.reopository.UserRepository;
 import lombok.Data;
 import org.springframework.stereotype.Service;
@@ -14,4 +15,12 @@ public class UserService {
         return userId;
 
     }
+     public boolean isUserExists(String email) {
+.
+        return userRepository.findByEmail(email).isPresent();
+    }
+  
 }
+
+
+
