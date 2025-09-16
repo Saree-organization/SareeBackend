@@ -39,6 +39,30 @@ public class OtpService {
         System.out.println("Generated OTP for " + email + ": " + otp);
     }
 
+    // New method for simple OTP verification
+    public void verifyOtp(String email, String otp) {
+        Optional<Users> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            throw new RuntimeException("User not found.");
+        }
+
+        Users user = userOptional.get();
+
+        if (user.getOtpGeneratedTime() == null ||
+                user.getOtpGeneratedTime().plusMinutes(OTP_VALID_DURATION_MINUTES).isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP has expired. Please request a new one.");
+        }
+
+        if (otp.equals(user.getOtp())) {
+            // OTP is valid, but we don't clear it here since the AuthController
+            // will call another service to complete registration or login.
+            // Clearing the OTP will be the responsibility of the calling service/controller.
+        } else {
+            throw new RuntimeException("Invalid OTP.");
+        }
+    }
+
     public String verifyOtpAndGenerateToken(String email, String otp) {
         Optional<Users> userOptional = userRepository.findByEmail(email);
 

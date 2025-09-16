@@ -1,5 +1,3 @@
-// File: com/web/saree/security/JwtUtils.java
-
 package com.web.saree.security;
 
 import io.jsonwebtoken.*;
@@ -8,7 +6,6 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
@@ -29,24 +26,24 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
-    public String generateTokenFromEmail(String email) { // Changed method name and parameter
+    public String generateTokenFromEmail(String email) {
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(email) // Changed to use email
+                .setSubject(email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime() + jwtExpirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String getEmailFromToken(String token) { // Changed method name
+    public String getEmailFromToken(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
         try {
-            final String email = getEmailFromToken(token); // Changed method call
+            final String email = getEmailFromToken(token);
             return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
         } catch (Exception e) {
             System.err.println("Token validation failed: " + e.getMessage());

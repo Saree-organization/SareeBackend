@@ -1,5 +1,3 @@
-// File: com/web/saree/entity/Users.java
-
 package com.web.saree.entity;
 
 import jakarta.persistence.Entity;
@@ -21,7 +19,7 @@ public class Users {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String email; // Changed from phoneNumber
+    private String email;
 
     private String otp;
 
