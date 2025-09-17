@@ -45,6 +45,7 @@ public class SecurityConfig {
                         // Permit all requests to your authentication endpoints and the public sarees endpoint
                         .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
                         // Permit other public endpoints
+                        .requestMatchers("/api/wishlist/**").authenticated()
                         .requestMatchers("/public/**", "/images/**").permitAll()
                         // Require authentication for all other requests
                         .anyRequest().authenticated()
