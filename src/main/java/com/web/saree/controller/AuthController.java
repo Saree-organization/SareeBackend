@@ -60,9 +60,21 @@ public class AuthController {
             return ResponseEntity.status(500).body(Map.of("message", "An error occurred: " + e.getMessage()));
         }
     }
+    @PostMapping("/verify-otp-register")
+    public ResponseEntity<?> verifyOtpRegister(@RequestBody VerifyOtpRequest request) {
+        try {
+            String jwt = otpService.verifyOtpAndGenerateToken(request.getEmail(), request.getOtp());
+            return ResponseEntity.ok(Map.of("message", "OTP verified successfully!", "token", jwt));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "An unexpected error occurred."));
+        }
+    }
 
-    @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
+    @CrossOrigin(origins = "http://localhost:3000") // Replace with your React app's URL
+    @PostMapping("/verify-otp-login")
+    public ResponseEntity<?> verifyOtpLogin(@RequestBody VerifyOtpRequest request) {
         try {
             String jwt = otpService.verifyOtpAndGenerateToken(request.getEmail(), request.getOtp());
             return ResponseEntity.ok(Map.of("message", "OTP verified successfully!", "token", jwt));
