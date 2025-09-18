@@ -31,9 +31,12 @@ public class SareeService {
             variant.setSkuCode(skuCode);
             variant.setName(name);
             variant.setColor(color);
+
             variant.setSalesPrice(Double.parseDouble(salesPrice));
             variant.setCostPrice(Double.parseDouble(costPrice));
             variant.setDiscountPercent(Double.parseDouble(discountPercent));
+            variant.setPriceAfterDiscount(variant.getSalesPrice() - (variant.getSalesPrice() * (variant.getDiscountPercent() / 100)));
+
             variant.setStock(Integer.parseInt(stock));
 
             // Upload Images immediately
