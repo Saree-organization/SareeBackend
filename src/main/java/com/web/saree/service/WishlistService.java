@@ -5,14 +5,13 @@ package com.web.saree.service;
 import com.web.saree.entity.Saree;
 import com.web.saree.entity.Users;
 import com.web.saree.entity.Wishlist;
-import com.web.saree.reopository.SareeRepository;
-import com.web.saree.reopository.UserRepository;
-import com.web.saree.reopository.WishlistRepository;
+import com.web.saree.repository.SareeRepository;
+import com.web.saree.repository.UserRepository;
+import com.web.saree.repository.WishlistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class WishlistService {

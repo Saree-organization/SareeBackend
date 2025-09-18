@@ -1,4 +1,4 @@
-package com.web.saree.reopository;
+package com.web.saree.repository;
 
 import com.web.saree.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,6 +1,6 @@
 // File: com/web/saree/repository/WishlistRepository.java
 
-package com.web.saree.reopository;
+package com.web.saree.repository;
 
 import com.web.saree.entity.Wishlist;
 import org.springframework.data.jpa.repository.JpaRepository;

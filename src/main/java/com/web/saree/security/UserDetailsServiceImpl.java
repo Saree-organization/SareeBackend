@@ -1,7 +1,7 @@
 package com.web.saree.security;
 
 import com.web.saree.entity.Users;
-import com.web.saree.reopository.UserRepository;
+import com.web.saree.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
