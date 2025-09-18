@@ -1,6 +1,6 @@
 // File: com/web/saree/reopository/UserRepository.java
 
-package com.web.saree.reopository;
+package com.web.saree.repository;
 
 import com.web.saree.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;

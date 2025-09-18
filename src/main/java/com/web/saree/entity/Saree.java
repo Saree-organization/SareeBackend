@@ -16,12 +16,14 @@ public class Saree {
 
     private String fabrics;
     private String design;
+    private Double weight;
+    private String category ;
+
     private Double length;
     private String description;
     private String border;
-    private String category;
-    private Double weight;
 
-    @OneToMany(mappedBy = "saree", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "saree", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Variant> variants;
+
 }

@@ -4,10 +4,11 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.web.saree.dto.request.SareeRequest.SareeRequest;
 import com.web.saree.dto.request.SareeRequest.VariantRequest;
+import com.web.saree.dto.response.sareeResponse.AllSareeResponse;
 import com.web.saree.dto.response.sareeResponse.SareeResponse;
 import com.web.saree.entity.Saree;
 import com.web.saree.entity.Variant;
-import com.web.saree.reopository.SareeRepository;
+import com.web.saree.repository.SareeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,6 @@ public class SareeService {
             }
 
             sareeRequest.getVariants().add(variant);
-            System.out.println("Step 2: Variant object created with uploaded files");
             return ResponseEntity.ok("Variant added successfully");
         } catch (Exception e) {
             e.printStackTrace();
@@ -111,15 +111,14 @@ public class SareeService {
     }
 
 
-    public List<SareeResponse> getAllSarees() {
+    public List<AllSareeResponse> getAllSarees() {
         List<Saree> sarees = sareeRepo.findAll ();
-        List<SareeResponse> sareeResponses = new ArrayList<> ();
+        List<AllSareeResponse> sareeResponses = new ArrayList<> ();
         for (Saree saree : sarees) {
-            SareeResponse sareeResponse = new SareeResponse ();
+            AllSareeResponse sareeResponse = new AllSareeResponse ();
             sareeResponse.setSarees (saree);
             sareeResponses.add (sareeResponse);
         }
-
         return sareeResponses;
     }
 
@@ -134,5 +133,16 @@ public class SareeService {
         return sareeResponse;
     }
 
+
+    public List<AllSareeResponse> filterSarees(String fabrics, String design, Double weight, String category) {
+        List<Saree> sarees = sareeRepo.filterSarees(fabrics, design, weight, category);
+        List<AllSareeResponse> sareeResponses = new ArrayList<>();
+        for (Saree saree : sarees) {
+            AllSareeResponse dto = new AllSareeResponse();
+            dto.setSarees(saree);
+            sareeResponses.add(dto);
+        }
+        return sareeResponses;
+    }
 
 }

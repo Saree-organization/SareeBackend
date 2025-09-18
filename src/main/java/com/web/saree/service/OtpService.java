@@ -1,7 +1,7 @@
 package com.web.saree.service;
 
 import com.web.saree.entity.Users;
-import com.web.saree.reopository.UserRepository;
+import com.web.saree.repository.UserRepository;
 import com.web.saree.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

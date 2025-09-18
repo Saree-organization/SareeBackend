@@ -16,12 +16,13 @@ public class Variant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String skuCode;
     private String name;
     private String color;
     private Double salesPrice;
-    private Double costPrice;
     private Double discountPercent;
+
+    private String skuCode;
+    private Double costPrice;
     private Integer stock;
 
     // Store image/video URLs as JSON or comma-separated strings

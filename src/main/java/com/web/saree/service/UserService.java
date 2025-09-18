@@ -1,7 +1,7 @@
 package com.web.saree.service;
 
 
-import com.web.saree.reopository.UserRepository;
+import com.web.saree.repository.UserRepository;
 import lombok.Data;
 import org.springframework.stereotype.Service;
 

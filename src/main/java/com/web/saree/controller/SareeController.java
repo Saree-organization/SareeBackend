@@ -4,7 +4,10 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.web.saree.dto.request.SareeRequest.SareeRequest;
 import com.web.saree.dto.request.SareeRequest.VariantRequest;
+import com.web.saree.entity.Saree;
+import com.web.saree.entity.Variant;
 import com.web.saree.service.SareeService;
+import com.web.saree.service.VariantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +24,7 @@ import java.util.Map;
 public class SareeController {
     private final Cloudinary cloudinary;
     private final SareeService sareeService;
+    private final VariantService variantService;
     private SareeRequest sareeRequest = new SareeRequest ();
 
     @PostMapping("/addSareeDetails")
@@ -33,7 +37,6 @@ public class SareeController {
             sareeRequest.setBorder ((String) data.get ("border"));
             sareeRequest.setCategory ((String) data.get ("category"));
             sareeRequest.setWeight (Double.parseDouble (data.get ("weight").toString ()));
-            System.out.println ("Step 1: SareeRequest object created");
             return ResponseEntity.ok ("Step 1 saved");
         } catch (Exception e) {
             e.printStackTrace ();
@@ -85,5 +88,37 @@ public class SareeController {
             return ResponseEntity.status (500).body ("Error in getting saree by id");
         }
     }
+
+
+    @GetMapping("/filter")
+    public ResponseEntity<?> filterSarees(
+            @RequestParam(required = false) String fabrics,
+            @RequestParam(required = false) String design,
+            @RequestParam(required = false) Double weight,
+            @RequestParam(required = false) String category
+    ) {
+        // ✅ debug print
+        System.out.println("fabrics: " + fabrics + " design: " + design + " weight: " + weight + " category: " + category);
+        return ResponseEntity.ok(sareeService.filterSarees(fabrics, design, weight, category));
+    }
+
+    @GetMapping("/variants/filter")
+    public ResponseEntity<?> filterVariants(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) Double minPrice,   // ✅ added
+            @RequestParam(required = false) Double maxPrice,   // ✅ added
+            @RequestParam(required = false) Double discountPercent
+    ) {
+        // debug print
+        System.out.println("name: " + name + " color: " + color + " minPrice: " + minPrice + " maxPrice: " + maxPrice + " discountPercent: " + discountPercent);
+
+        return ResponseEntity.ok(variantService.filterVariants(name, color, minPrice, maxPrice, discountPercent));
+    }
+
+
+
+
+
 
 }

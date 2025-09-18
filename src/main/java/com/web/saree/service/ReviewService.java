@@ -1,7 +1,7 @@
 package com.web.saree.service;
 
 import com.web.saree.entity.Review;
-import com.web.saree.reopository.ReviewRepository;
+import com.web.saree.repository.ReviewRepository;
 import lombok.Data;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
