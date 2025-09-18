@@ -1,5 +1,3 @@
-// File: com/web/saree/repository/WishlistRepository.java
-
 package com.web.saree.repository;
 
 import com.web.saree.entity.Wishlist;
@@ -12,8 +10,8 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
     // Check if a specific saree is already in a user's wishlist
     Optional<Wishlist> findByUserEmailAndSareeId(String email, Long sareeId);
 
-    // Find all wishlist items for a specific user
-    List<Wishlist> findByUserEmail(String email);
+    // Is method mein badlav kiya gaya hai
+    List<Wishlist> findByUserId(Long userId);
 
     // Check if the item exists before deleting
     Optional<Wishlist> findByUserIdAndSareeId(Long userId, Long sareeId);

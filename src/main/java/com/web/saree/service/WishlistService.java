@@ -1,5 +1,3 @@
-// File: com/web/saree/service/WishlistService.java
-
 package com.web.saree.service;
 
 import com.web.saree.entity.Saree;
@@ -51,8 +49,11 @@ public class WishlistService {
         wishlistRepository.delete(wishlist);
     }
 
+    // Is method mein badlav kiya gaya hai
     public List<Wishlist> getWishlistItems(String userEmail) {
-        return wishlistRepository.findByUserEmail(userEmail);
+        Users user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return wishlistRepository.findByUserId(user.getId());
     }
 
     public boolean isSareeInWishlist(String userEmail, Long sareeId) {
