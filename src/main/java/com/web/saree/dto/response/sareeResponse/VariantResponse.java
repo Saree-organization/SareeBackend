@@ -13,6 +13,7 @@ public class VariantResponse {
     private Double salesPrice;
     private Double costPrice;
     private Double discountPercent;
+    private Double priceAfterDiscount;
     private Integer stock;
     private List<String> images;
     private String video;

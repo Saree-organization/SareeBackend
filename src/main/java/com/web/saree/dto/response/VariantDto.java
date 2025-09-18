@@ -11,7 +11,7 @@ public class VariantDto {
     private Long id;
     private String name;
     private String color;
-    private Double salesPrice;
+    private Double priceAfterDiscount;
     private List<String> images;
 
     // Saree details needed for display
@@ -22,7 +22,7 @@ public class VariantDto {
         this.id = variant.getId();
         this.name = variant.getName();
         this.color = variant.getColor();
-        this.salesPrice = variant.getSalesPrice();
+        this.priceAfterDiscount = variant.getPriceAfterDiscount();
         this.images = variant.getImages();
 
         if (variant.getSaree() != null) {

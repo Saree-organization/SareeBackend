@@ -12,6 +12,7 @@ public class VariantRequest {
     private String color;
     private Double salesPrice;
     private Double costPrice;
+    private Double priceAfterDiscount;
     private Double discountPercent;
     private Integer stock;
 

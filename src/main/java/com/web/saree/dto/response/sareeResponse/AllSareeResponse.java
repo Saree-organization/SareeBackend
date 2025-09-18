@@ -37,6 +37,7 @@ public class AllSareeResponse {
             variantResponse.setSalesPrice (variant.getSalesPrice ());
             variantResponse.setCostPrice (variant.getCostPrice ());
             variantResponse.setDiscountPercent (variant.getDiscountPercent ());
+            variantResponse.setPriceAfterDiscount (variant.getPriceAfterDiscount ());
             variantResponse.setStock (variant.getStock ());
             variantResponse.setImages (variant.getImages ());
             this.variants.add (variantResponse);

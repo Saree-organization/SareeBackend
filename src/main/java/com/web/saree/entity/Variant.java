@@ -18,9 +18,10 @@ public class Variant {
 
     private String name;
     private String color;
+
     private Double salesPrice;
     private Double discountPercent;
-
+    private Double priceAfterDiscount;
     private String skuCode;
     private Double costPrice;
     private Integer stock;
