@@ -1,9 +1,9 @@
-// File: com/web/saree/controller/WishlistController.java
-
 package com.web.saree.controller;
 
 import com.web.saree.dto.response.WishlistResponse;
+import com.web.saree.entity.Users;
 import com.web.saree.entity.Wishlist;
+import com.web.saree.repository.UserRepository;
 import com.web.saree.service.WishlistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +22,10 @@ public class WishlistController {
 
     @Autowired
     private WishlistService wishlistService;
+
+    // Yeh line add ki gayi hai
+    @Autowired
+    private UserRepository userRepository;
 
     private String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -49,9 +53,11 @@ public class WishlistController {
         }
     }
 
+    // Is method mein badlav kiya gaya hai
     @GetMapping
     public ResponseEntity<List<WishlistResponse>> getWishlist() {
-        List<Wishlist> wishlistItems = wishlistService.getWishlistItems(getCurrentUserEmail());
+        String userEmail = getCurrentUserEmail();
+        List<Wishlist> wishlistItems = wishlistService.getWishlistItems(userEmail);
 
         // CONVERT THE LIST OF ENTITIES TO A LIST OF DTOs
         List<WishlistResponse> responseList = wishlistItems.stream()
