@@ -9,6 +9,7 @@ import com.web.saree.dto.response.sareeResponse.SareeResponse;
 import com.web.saree.entity.Saree;
 import com.web.saree.entity.Variant;
 import com.web.saree.repository.SareeRepository;
+import com.web.saree.repository.VariantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +26,7 @@ public class SareeService {
 
     private final Cloudinary cloudinary;
     private final SareeRepository sareeRepo;
+    private final VariantRepository variantRepo;
 
     public ResponseEntity<?> addVariant( SareeRequest sareeRequest,String skuCode, String name, String color, String salesPrice, String costPrice, String discountPercent, String stock, MultipartFile[] images, MultipartFile[] videos) {
         try {
@@ -137,15 +140,32 @@ public class SareeService {
     }
 
 
-    public List<AllSareeResponse> filterSarees(String fabrics, String design, Double weight, String category) {
-        List<Saree> sarees = sareeRepo.filterSarees(fabrics, design, weight, category);
-        List<AllSareeResponse> sareeResponses = new ArrayList<>();
-        for (Saree saree : sarees) {
+    public List<AllSareeResponse> filterSarees(String fabrics, String category, String color,
+                                               Double minPrice, Double maxPrice) {
+
+        // 1. Get sarees by fabrics & category
+        List<Saree> sarees = sareeRepo.findByFabricsAndCategory(fabrics, category);
+
+
+        // 2. Get filtered variants
+        List<Variant> filteredVariants = variantRepo.findFilteredVariants(fabrics, category, color, minPrice, maxPrice);
+
+
+        // 3. Create final DTO list
+        List<AllSareeResponse> responses  = new ArrayList<>();
+
+        for (Variant variant : filteredVariants) {
+            Saree saree = variant.getSaree();
+
+            // show only this variant
+            saree.setVariants(List.of(variant));
+
             AllSareeResponse dto = new AllSareeResponse();
             dto.setSarees(saree);
-            sareeResponses.add(dto);
+            responses.add(dto);
         }
-        return sareeResponses;
+
+        return responses;
     }
 
 }

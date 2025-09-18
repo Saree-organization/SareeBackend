@@ -12,33 +12,22 @@ import java.util.Optional;
 @Repository
 public interface VariantRepository extends JpaRepository<Variant, Long> {
 
-    // You can add custom query methods here if needed, for example:
-
-    // Find all variants for a specific saree ID
     List<Variant> findBySareeId(Long sareeId);
 
-    // Find a variant by its SKU code
-    Optional<Variant> findBySkuCode(String skuCode);
-
-    // Find variants by color and saree ID
-    List<Variant> findByColorAndSareeId(String color, Long sareeId);
-
-
     @Query("""
-       SELECT v FROM Variant v 
-       WHERE (:name IS NULL OR v.name LIKE %:name%)
+       SELECT v FROM Variant v
+       JOIN v.saree s
+       WHERE (:fabrics IS NULL OR s.fabrics = :fabrics)
+         AND (:category IS NULL OR s.category = :category)
          AND (:color IS NULL OR v.color = :color)
-         AND (:minPrice IS NULL OR v.salesPrice >= :minPrice)
-         AND (:maxPrice IS NULL OR v.salesPrice <= :maxPrice)
-         AND (:discountPercent IS NULL OR v.discountPercent >= :discountPercent)
+         AND (:minPrice IS NULL OR v.priceAfterDiscount >= :minPrice)
+         AND (:maxPrice IS NULL OR v.priceAfterDiscount <= :maxPrice)
        """)
-    List<Variant> filterVariants(
-            @Param("name") String name,
-            @Param("color") String color,
-            @Param("minPrice") Double minPrice,     // ✅ added
-            @Param("maxPrice") Double maxPrice,     // ✅ added
-            @Param("discountPercent") Double discountPercent
-    );
+    List<Variant> findFilteredVariants(@Param("fabrics") String fabrics,
+                                       @Param("category") String category,
+                                       @Param("color") String color,
+                                       @Param("minPrice") Double minPrice,
+                                       @Param("maxPrice") Double maxPrice);
 
 }
 
