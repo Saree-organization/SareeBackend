@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.web.saree.dto.request.SareeRequest.SareeRequest;
 import com.web.saree.dto.request.SareeRequest.VariantRequest;
+import com.web.saree.dto.response.sareeResponse.AllSareeResponse;
 import com.web.saree.entity.Saree;
 import com.web.saree.entity.Variant;
 import com.web.saree.service.SareeService;
@@ -89,36 +90,17 @@ public class SareeController {
         }
     }
 
-
     @GetMapping("/filter")
-    public ResponseEntity<?> filterSarees(
+    public ResponseEntity<List<AllSareeResponse>> filterSarees(
             @RequestParam(required = false) String fabrics,
-            @RequestParam(required = false) String design,
-            @RequestParam(required = false) Double weight,
-            @RequestParam(required = false) String category
-    ) {
-        // ✅ debug print
-        System.out.println("fabrics: " + fabrics + " design: " + design + " weight: " + weight + " category: " + category);
-        return ResponseEntity.ok(sareeService.filterSarees(fabrics, design, weight, category));
-    }
-
-    @GetMapping("/variants/filter")
-    public ResponseEntity<?> filterVariants(
-            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Double minPrice,   // ✅ added
-            @RequestParam(required = false) Double maxPrice,   // ✅ added
-            @RequestParam(required = false) Double discountPercent
-    ) {
-        // debug print
-        System.out.println("name: " + name + " color: " + color + " minPrice: " + minPrice + " maxPrice: " + maxPrice + " discountPercent: " + discountPercent);
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice) {
+        System.out.println ("fabrics: " + fabrics + " category: " + category + " color: " + color + " minPrice: " + minPrice + " maxPrice: " + maxPrice);
+        List<AllSareeResponse> result = sareeService.filterSarees (fabrics, category, color, minPrice, maxPrice);
 
-        return ResponseEntity.ok(variantService.filterVariants(name, color, minPrice, maxPrice, discountPercent));
+        return ResponseEntity.ok (result);
     }
-
-
-
-
-
 
 }
