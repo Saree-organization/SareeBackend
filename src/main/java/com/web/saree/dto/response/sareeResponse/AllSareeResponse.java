@@ -40,7 +40,8 @@
                 variantResponse.setDiscountPercent (variant.getDiscountPercent ());
                 variantResponse.setPriceAfterDiscount (variant.getPriceAfterDiscount ());
                 variantResponse.setStock (variant.getStock ());
-                variantResponse.setImages (variant.getImages ());
+                List<String> images = List.of (variant.getImages ().get (0) , variant.getImages ().get (1));
+                variantResponse.setImages (images);
                 this.variants.add (variantResponse);
             }
 
