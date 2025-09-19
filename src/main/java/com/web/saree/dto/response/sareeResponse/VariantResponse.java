@@ -1,10 +1,14 @@
 package com.web.saree.dto.response.sareeResponse;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 @Data
+@Setter
+@Getter
 public class VariantResponse {
     private Long id;
     private String skuCode;
