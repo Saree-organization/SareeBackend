@@ -23,7 +23,6 @@ public class WishlistController {
     @Autowired
     private WishlistService wishlistService;
 
-    // Yeh line add ki gayi hai
     @Autowired
     private UserRepository userRepository;
 
@@ -53,13 +52,11 @@ public class WishlistController {
         }
     }
 
-    // Is method mein badlav kiya gaya hai
     @GetMapping
     public ResponseEntity<List<WishlistResponse>> getWishlist() {
         String userEmail = getCurrentUserEmail();
         List<Wishlist> wishlistItems = wishlistService.getWishlistItems(userEmail);
 
-        // CONVERT THE LIST OF ENTITIES TO A LIST OF DTOs
         List<WishlistResponse> responseList = wishlistItems.stream()
                 .map(WishlistResponse::new)
                 .collect(Collectors.toList());

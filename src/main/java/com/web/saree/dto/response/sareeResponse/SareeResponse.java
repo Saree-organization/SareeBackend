@@ -1,3 +1,5 @@
+// File: com/web/saree/dto/response/sareeResponse/SareeResponse.java
+
 package com.web.saree.dto.response.sareeResponse;
 
 import com.web.saree.entity.Saree;
@@ -19,36 +21,22 @@ public class SareeResponse {
     private String category;
     private Double weight;
 
-    private List<VariantResponse> variants = new ArrayList<> ();
+    private List<VariantResponse> variants = new ArrayList<>();
 
     public void setSarees(Saree saree) {
-        this.id = saree.getId ();
-        this.fabrics = saree.getFabrics ();
-        this.design = saree.getDesign ();
-        this.length = saree.getLength ();
-        this.description = saree.getDescription ();
-        this.border = saree.getBorder ();
-        this.category = saree.getCategory ();
-        this.weight = saree.getWeight ();
+        this.id = saree.getId();
+        this.fabrics = saree.getFabrics();
+        this.design = saree.getDesign();
+        this.length = saree.getLength();
+        this.description = saree.getDescription();
+        this.border = saree.getBorder();
+        this.category = saree.getCategory();
+        this.weight = saree.getWeight();
 
-        for (int i = 0; i < saree.getVariants ().size (); i++){
-            Variant variant = saree.getVariants ().get (i);
-            System.out.println (variant);
-            VariantResponse variantResponse = new VariantResponse ();
-            variantResponse.setId (variant.getId ());
-            variantResponse.setSkuCode (variant.getSkuCode ());
-            variantResponse.setName (variant.getName ());
-            variantResponse.setColor (variant.getColor ());
-            variantResponse.setSalesPrice (variant.getSalesPrice ());
-            variantResponse.setCostPrice (variant.getCostPrice ());
-            variantResponse.setDiscountPercent (variant.getDiscountPercent ());
-            variantResponse.setPriceAfterDiscount (variant.getPriceAfterDiscount ());
-            variantResponse.setStock (variant.getStock ());
-            variantResponse.setImages (variant.getImages ());
-            variantResponse.setVideo (variant.getVideos ());
-            this.variants.add (variantResponse);
+        // This is the updated loop that fixes the error
+        for (Variant variant : saree.getVariants()) {
+            VariantResponse variantResponse = new VariantResponse(variant);
+            this.variants.add(variantResponse);
         }
-
-
     }
 }

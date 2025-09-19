@@ -8,6 +8,7 @@ import com.web.saree.entity.Variant;
 import com.web.saree.repository.CartItemRepository;
 import com.web.saree.repository.UserRepository;
  import com.web.saree.repository.VariantRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -78,7 +79,17 @@ public class CartService {
 
         cartItemRepository.delete(item);
     }
+// File: com/web/saree/service/CartService.java
+// ... (existing code)
 
+    @Transactional
+    public void clearCart(String userEmail) {
+        Users user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<CartItem> cartItems = cartItemRepository.findByUserId(user.getId());
+        cartItemRepository.deleteAll(cartItems);
+    }
     public long getCartItemCount(String userEmail) {
         return cartItemRepository.countByUserEmail(userEmail);
     }

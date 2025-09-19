@@ -19,29 +19,26 @@ public class AllSareeResponse {
     private String category;
     private Double weight;
 
-    private List<VariantResponse> variants = new ArrayList<> ();
+    private List<VariantResponse> variants = new ArrayList<>();
 
     public void setSarees(Saree saree) {
-        this.id = saree.getId ();
-        this.fabrics = saree.getFabrics ();
-        this.design = saree.getDesign ();
-        this.length = saree.getLength ();
-        this.description = saree.getDescription ();
-        this.border = saree.getBorder ();
-        this.category = saree.getCategory ();
-        this.weight = saree.getWeight ();
-        for (int i = 0; i < 1; i++){
-            Variant variant = saree.getVariants ().get (i);
-            System.out.println (variant);
-            VariantResponse variantResponse = new VariantResponse ();
-            variantResponse.setSalesPrice (variant.getSalesPrice ());
-            variantResponse.setCostPrice (variant.getCostPrice ());
-            variantResponse.setDiscountPercent (variant.getDiscountPercent ());
-            variantResponse.setPriceAfterDiscount (variant.getPriceAfterDiscount ());
-            variantResponse.setStock (variant.getStock ());
-            variantResponse.setImages (variant.getImages ());
-            this.variants.add (variantResponse);
-        }
+        this.id = saree.getId();
+        this.fabrics = saree.getFabrics();
+        this.design = saree.getDesign();
+        this.length = saree.getLength();
+        this.description = saree.getDescription();
+        this.border = saree.getBorder();
+        this.category = saree.getCategory();
+        this.weight = saree.getWeight();
 
+        // Check if variants exist before proceeding
+        if (saree.getVariants() != null && !saree.getVariants().isEmpty()) {
+            // Iterate over all variants and create a new VariantResponse for each
+            for (Variant variant : saree.getVariants()) {
+                VariantResponse variantResponse = new VariantResponse(variant);
+                this.variants.add(variantResponse);
+            }
+
+        }
     }
 }

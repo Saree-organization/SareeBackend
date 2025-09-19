@@ -7,12 +7,9 @@ import java.util.Optional;
 
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 
-    // Check if a specific saree is already in a user's wishlist
     Optional<Wishlist> findByUserEmailAndSareeId(String email, Long sareeId);
 
-    // Is method mein badlav kiya gaya hai
     List<Wishlist> findByUserId(Long userId);
 
-    // Check if the item exists before deleting
     Optional<Wishlist> findByUserIdAndSareeId(Long userId, Long sareeId);
 }

@@ -49,7 +49,6 @@ public class WishlistService {
         wishlistRepository.delete(wishlist);
     }
 
-    // Is method mein badlav kiya gaya hai
     public List<Wishlist> getWishlistItems(String userEmail) {
         Users user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));

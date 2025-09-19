@@ -1,5 +1,3 @@
-// File: com/web/saree/entity/CartItem.java
-
 package com.web.saree.entity;
 
 import jakarta.persistence.*;
