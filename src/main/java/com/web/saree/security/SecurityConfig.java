@@ -47,6 +47,8 @@ public class SecurityConfig {
                         // Permit other public endpoints
                         .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
                         .requestMatchers("/public/**", "/images/**").permitAll()
+                        // New: Authorize payment endpoints
+                        .requestMatchers("/api/payment/**").authenticated()
                         // Require authentication for all other requests
                         .anyRequest().authenticated()
                 );
