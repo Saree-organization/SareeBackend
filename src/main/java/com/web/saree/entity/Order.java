@@ -1,5 +1,7 @@
 package com.web.saree.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -20,6 +22,7 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference // Breaks the circular reference with Users
     private Users user;
 
     private Double totalAmount;
@@ -29,6 +32,7 @@ public class Order {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference // Establishes the parent-child relationship with OrderItem
     private List<OrderItem> items;
 
     @PrePersist

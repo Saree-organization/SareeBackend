@@ -1,5 +1,6 @@
 package com.web.saree.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -14,6 +15,7 @@ public class OrderItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
+    @JsonBackReference // Breaks the circular reference with Order
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
