@@ -29,4 +29,5 @@ public interface VariantRepository extends JpaRepository<Variant, Long> {
                                        @Param("minPrice") Double minPrice,
                                        @Param("maxPrice") Double maxPrice);
 
+
 }
