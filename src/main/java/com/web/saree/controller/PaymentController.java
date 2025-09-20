@@ -3,10 +3,14 @@ package com.web.saree.controller;
 import com.razorpay.RazorpayException;
 import com.web.saree.dto.request.PaymentRequest;
 import com.web.saree.dto.request.PaymentVerificationRequest;
+import com.web.saree.dto.response.OrderItemResponse;
+import com.web.saree.dto.response.OrderResponse;
 import com.web.saree.entity.Order;
+import com.web.saree.entity.OrderItem;
 import com.web.saree.repository.OrderRepository;
 import com.web.saree.service.PaymentService;
 import com.web.saree.security.CustomUserDetails; // सही क्लास का उपयोग करें
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/payment")
@@ -65,12 +70,44 @@ public class PaymentController {
             if (userDetails == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
             }
-            List<Order> orders = orderRepository.findByUserEmailOrderByCreatedAtDesc(userDetails.getUsername());
-            return ResponseEntity.ok(orders);
+
+            // यहाँ बदलाव करें: नए मेथड का उपयोग करें
+            List<Order> orders = orderRepository.findByEmailWithDetails(userDetails.getUsername());
+
+            List<OrderResponse> orderResponses = orders.stream()
+                    .map(order -> {
+                        OrderResponse orderResponse = new OrderResponse();
+                        orderResponse.setRazorpayOrderId(order.getRazorpayOrderId());
+                        orderResponse.setTotalAmount(order.getTotalAmount());
+                        orderResponse.setStatus(order.getStatus());
+                        orderResponse.setCreatedAt(order.getCreatedAt());
+
+                        List<OrderItemResponse> itemResponses = order.getItems().stream()
+                                .map(item -> {
+                                    OrderItemResponse itemResponse = new OrderItemResponse();
+
+                                    // ये लाइनें अब काम करेंगी क्योंकि variant डेटा पहले ही लोड हो चुका है
+                                    itemResponse.setProductName(item.getVariant().getName());
+
+                                    List<String> images = item.getVariant().getImages();
+                                    if (images != null && !images.isEmpty()) {
+                                        itemResponse.setImageUrl(images.get(0));
+                                    }
+
+                                    itemResponse.setQuantity(item.getQuantity());
+                                    itemResponse.setPrice(item.getPrice());
+                                    return itemResponse;
+                                })
+                                .collect(Collectors.toList());
+                        orderResponse.setItems(itemResponses);
+                        return orderResponse;
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(orderResponses);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to fetch orders."));
         }
     }
-
 
 }
