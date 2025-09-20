@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface VariantRepository extends JpaRepository<Variant, Long> {
 
     List<Variant> findBySareeId(Long sareeId);
+
     @Query("""
        SELECT v FROM Variant v
        JOIN v.saree s
@@ -29,4 +30,3 @@ public interface VariantRepository extends JpaRepository<Variant, Long> {
                                        @Param("maxPrice") Double maxPrice);
 
 }
-
