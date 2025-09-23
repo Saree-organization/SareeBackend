@@ -109,5 +109,45 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to fetch orders."));
         }
     }
+    @GetMapping("/admin-orders")
+    public ResponseEntity<?> getAllOrdersForAdmin() {
+        try {
+            List<Order> orders = orderRepository.findAll();
+
+            List<OrderResponse> orderResponses = orders.stream()
+                    .map(order -> {
+                        OrderResponse orderResponse = new OrderResponse();
+                        orderResponse.setRazorpayOrderId(order.getRazorpayOrderId());
+                        orderResponse.setTotalAmount(order.getTotalAmount());
+                        orderResponse.setStatus(order.getStatus());
+                        orderResponse.setCreatedAt(order.getCreatedAt());
+
+                        List<OrderItemResponse> itemResponses = order.getItems().stream()
+                                .map(item -> {
+                                    OrderItemResponse itemResponse = new OrderItemResponse();
+                                    itemResponse.setProductName(item.getVariant().getName());
+
+                                    List<String> images = item.getVariant().getImages();
+                                    if (images != null && !images.isEmpty()) {
+                                        itemResponse.setImageUrl(images.get(0));
+                                    }
+
+                                    itemResponse.setQuantity(item.getQuantity());
+                                    itemResponse.setPrice(item.getPrice());
+                                    return itemResponse;
+                                })
+                                .collect(Collectors.toList());
+                        orderResponse.setItems(itemResponses);
+                        return orderResponse;
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(orderResponses);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to fetch all orders."));
+        }
+    }
+
 
 }
