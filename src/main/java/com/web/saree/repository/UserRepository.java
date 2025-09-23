@@ -4,6 +4,7 @@ package com.web.saree.repository;
 
 import com.web.saree.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -12,4 +13,6 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<Users, Long> {
     Optional<Users> findByEmail(String email);
 
+    @Query("SELECT u FROM Users u WHERE u.email = :email")
+    String findGmailById(Long userId);
 }
