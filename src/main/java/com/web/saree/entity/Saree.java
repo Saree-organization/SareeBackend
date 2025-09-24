@@ -20,6 +20,7 @@ public class Saree {
     private String category ;
 
     private Double length;
+    @Lob
     private String description;
     private String border;
 
