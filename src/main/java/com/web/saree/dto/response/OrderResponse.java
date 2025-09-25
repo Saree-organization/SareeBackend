@@ -7,6 +7,7 @@ import java.util.List;
 
 @Data
 public class OrderResponse {
+    private Long userId;
     private String razorpayOrderId;
     private Double totalAmount;
     private String status;

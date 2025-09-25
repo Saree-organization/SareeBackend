@@ -1,6 +1,7 @@
 package com.web.saree.service;
 
 
+import com.twilio.rest.bulkexports.v1.export.ExportCustomJob;
 import com.web.saree.dto.response.OrderItemResponse;
 import com.web.saree.dto.response.OrderResponse;
 import com.web.saree.dto.response.UserResponse;
@@ -78,6 +79,16 @@ public class UserService {
 
         return ResponseEntity.ok(orderResponses);
 
+    }
+
+    public String getUserById(Long userId) {
+        Users user = userRepository.findById (userId).get ();
+        return user.getEmail ();
+    }
+
+
+    public Users findUser(Long userId) {
+        return userRepository.findById (userId).get ();
     }
 }
 
