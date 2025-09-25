@@ -84,7 +84,8 @@ public class PaymentController {
                         OrderResponse orderResponse = new OrderResponse ();
                         orderResponse.setRazorpayOrderId (order.getRazorpayOrderId ());
                         orderResponse.setTotalAmount (order.getTotalAmount ());
-                        orderResponse.setStatus (order.getStatus ());
+                        orderResponse.setPaymentStatus(order.getPaymentStatus());
+                        orderResponse.setOrderStatus(order.getOrderStatus ());
                         orderResponse.setCreatedAt (order.getCreatedAt ());
 
                         List<OrderItemResponse> itemResponses = order.getItems ().stream ()
@@ -129,7 +130,8 @@ public class PaymentController {
                         OrderResponse orderResponse = new OrderResponse ();
                         orderResponse.setRazorpayOrderId (order.getRazorpayOrderId ());
                         orderResponse.setTotalAmount (order.getTotalAmount ());
-                        orderResponse.setStatus (order.getStatus ());
+                        orderResponse.setPaymentStatus(order.getPaymentStatus());
+                        orderResponse.setOrderStatus(order.getOrderStatus ());
                         orderResponse.setCreatedAt (order.getCreatedAt ());
 
                         List<OrderItemResponse> itemResponses = order.getItems ().stream ()
@@ -172,7 +174,8 @@ public class PaymentController {
                         orderResponse.setUserId (order.getUser ().getId ());
                         orderResponse.setRazorpayOrderId (order.getRazorpayOrderId ());
                         orderResponse.setTotalAmount (order.getTotalAmount ());
-                        orderResponse.setStatus (order.getStatus ());
+                        orderResponse.setPaymentStatus(order.getPaymentStatus());
+                        orderResponse.setOrderStatus(order.getOrderStatus ());
                         orderResponse.setCreatedAt (order.getCreatedAt ());
 
                         List<OrderItemResponse> itemResponses = order.getItems ().stream ()
