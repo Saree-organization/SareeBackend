@@ -53,7 +53,8 @@ public class PaymentService {
         com.web.saree.entity.Order newOrder = new com.web.saree.entity.Order();
         newOrder.setUser(user);
         newOrder.setTotalAmount(amount);
-        newOrder.setStatus("Pending");
+        newOrder.setPaymentStatus("Pending");
+        newOrder.setOrderStatus("Pending");
         com.web.saree.entity.Order savedOrder = orderRepository.save(newOrder);
 
         // 2. Save each cart item to OrderItems table
@@ -101,7 +102,8 @@ public class PaymentService {
         boolean isVerified = Utils.verifyPaymentSignature(options, keySecret);
 
         if (isVerified) {
-            order.setStatus("Success");
+            order.setPaymentStatus("Success");
+            order.setOrderStatus("Shipping");
             order.setRazorpayPaymentId(razorpayPaymentId);
             order.setRazorpaySignature(razorpaySignature);
             orderRepository.save(order);
@@ -111,7 +113,7 @@ public class PaymentService {
 
             return true;
         } else {
-            order.setStatus("Failed");
+            order.setPaymentStatus("Failed");
             orderRepository.save(order);
             return false;
         }

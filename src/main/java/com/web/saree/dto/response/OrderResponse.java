@@ -10,7 +10,8 @@ public class OrderResponse {
     private Long userId;
     private String razorpayOrderId;
     private Double totalAmount;
-    private String status;
+    private String paymentStatus;
+    private  String orderStatus;
     private LocalDateTime createdAt;
     private List<OrderItemResponse> items;
 }

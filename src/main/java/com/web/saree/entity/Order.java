@@ -27,7 +27,8 @@ public class Order {
 
     private Double totalAmount;
 
-    private String status; // "Pending", "Success", "Failed"
+    private String paymentStatus; // "Pending", "Success", "Failed"
+    private String orderStatus;// "Shipping, "OutOf Delivery, Delivered, Exchange,Exchanged"
 
     private LocalDateTime createdAt;
 
