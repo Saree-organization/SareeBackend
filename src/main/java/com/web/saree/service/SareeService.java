@@ -95,6 +95,7 @@ public class SareeService {
                 variant.setSalesPrice(vr.getSalesPrice());
                 variant.setCostPrice(vr.getCostPrice());
                 variant.setDiscountPercent(vr.getDiscountPercent());
+                variant.setPriceAfterDiscount(vr.getPriceAfterDiscount());
                 variant.setStock(vr.getStock());
 
                 // Already uploaded → just save URLs

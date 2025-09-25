@@ -72,7 +72,8 @@ public class AuthController {
         }
     }
 
-    @CrossOrigin(origins = "http://localhost:3000") // Replace with your React app's URL
+    @CrossOrigin(origins = {"http://localhost:8080", "http://localhost:3000"})
+    // Replace with your React app's URL
     @PostMapping("/verify-otp-login")
     public ResponseEntity<?> verifyOtpLogin(@RequestBody VerifyOtpRequest request) {
         try {
