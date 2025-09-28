@@ -11,7 +11,7 @@ import com.web.saree.entity.OrderItem;
 import com.web.saree.entity.Users;
 import com.web.saree.repository.OrderRepository;
 import com.web.saree.service.PaymentService;
-import com.web.saree.security.CustomUserDetails; // सही क्लास का उपयोग करें
+import com.web.saree.security.CustomUserDetails;
 import com.web.saree.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -33,13 +33,23 @@ public class PaymentController {
     private final OrderRepository orderRepository;
     private final UserService userService;
 
+    // ******************************************************
+    // *** यहाँ बदलाव किया गया है: shippingAddressId को पास करना ***
+    // ******************************************************
     @PostMapping("/create-order")
     public ResponseEntity<?> createOrder(@RequestBody PaymentRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
             if (userDetails == null) {
                 return ResponseEntity.status (HttpStatus.UNAUTHORIZED).body ("User not authenticated.");
             }
-            Map<String, Object> orderDetails = paymentService.createRazorpayOrder (userDetails.getUsername (), request.getAmount ());
+
+            // service method को अब shippingAddressId भी pass करना होगा
+            Map<String, Object> orderDetails = paymentService.createRazorpayOrder (
+                    userDetails.getUsername (),
+                    request.getAmount (),
+                    request.getShippingAddressId() // PaymentRequest DTO से ID को पास करें
+            );
+
             return ResponseEntity.ok (orderDetails);
         } catch (RazorpayException e) {
             return ResponseEntity.status (HttpStatus.BAD_REQUEST).body (Map.of ("message", "Razorpay Error: " + e.getMessage ()));
@@ -47,6 +57,7 @@ public class PaymentController {
             return ResponseEntity.status (HttpStatus.BAD_REQUEST).body (Map.of ("message", e.getMessage ()));
         }
     }
+    // ******************************************************
 
     @PostMapping("/verify")
     public ResponseEntity<?> verifyPayment(@RequestBody PaymentVerificationRequest request) {
