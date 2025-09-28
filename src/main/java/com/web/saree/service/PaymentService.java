@@ -7,10 +7,7 @@ import com.razorpay.Utils;
 import com.web.saree.entity.CartItem;
 import com.web.saree.entity.OrderItem;
 import com.web.saree.entity.Users;
-import com.web.saree.repository.CartItemRepository;
-import com.web.saree.repository.OrderItemRepository;
-import com.web.saree.repository.OrderRepository;
-import com.web.saree.repository.UserRepository;
+import com.web.saree.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,9 +32,9 @@ public class PaymentService {
     private final OrderItemRepository orderItemRepository;
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
-
+    private final VariantRepository variantRepository;
     @Transactional
-    public Map<String, Object> createRazorpayOrder(String userEmail, Double amount) throws RazorpayException {
+    public Map<String, Object> createRazorpayOrder(String userEmail, Double amount,Long shippingAddressId) throws RazorpayException {
         RazorpayClient razorpayClient = new RazorpayClient(keyId, keySecret);
 
         // Fetch user and cart items
@@ -53,7 +50,7 @@ public class PaymentService {
         com.web.saree.entity.Order newOrder = new com.web.saree.entity.Order();
         newOrder.setUser(user);
         newOrder.setTotalAmount(amount);
-        newOrder.setPaymentStatus("Pending");
+        newOrder.setPaymentStatus("Success");
         newOrder.setOrderStatus("Pending");
         com.web.saree.entity.Order savedOrder = orderRepository.save(newOrder);
 
@@ -102,8 +99,24 @@ public class PaymentService {
         boolean isVerified = Utils.verifyPaymentSignature(options, keySecret);
 
         if (isVerified) {
+
+            for (OrderItem item : order.getItems()) {
+                com.web.saree.entity.Variant variant = item.getVariant();
+                int orderedQuantity = item.getQuantity();
+
+                if (variant.getStock() < orderedQuantity) {
+                    throw new IllegalStateException("Insufficient stock for product: " + variant.getName());
+                }
+
+                // Quantity
+                variant.setStock(variant.getStock() - orderedQuantity);
+
+                variantRepository.save(variant);
+            }
+            // =========================================================
+
             order.setPaymentStatus("Success");
-            order.setOrderStatus("Shipping");
+            order.setOrderStatus("Shipping"); // Update status
             order.setRazorpayPaymentId(razorpayPaymentId);
             order.setRazorpaySignature(razorpaySignature);
             orderRepository.save(order);
