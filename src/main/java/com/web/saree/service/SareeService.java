@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.web.saree.dto.request.SareeRequest.SareeRequest;
 import com.web.saree.dto.request.SareeRequest.VariantRequest;
+import com.web.saree.dto.response.VariantDto;
 import com.web.saree.dto.response.sareeResponse.AllSareeResponse;
 import com.web.saree.dto.response.sareeResponse.SareeResponse;
 import com.web.saree.entity.Saree;
@@ -11,6 +12,8 @@ import com.web.saree.entity.Variant;
 import com.web.saree.repository.SareeRepository;
 import com.web.saree.repository.VariantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,50 +30,45 @@ public class SareeService {
     private final Cloudinary cloudinary;
     private final SareeRepository sareeRepo;
     private final VariantRepository variantRepo;
+    private final OrderService orderService;
 
-    public ResponseEntity<?> addVariant( SareeRequest sareeRequest,String skuCode, String name, String color, String salesPrice, String costPrice, String discountPercent, String stock, MultipartFile[] images, MultipartFile[] videos) {
+    public ResponseEntity<?> addVariant(SareeRequest sareeRequest, String skuCode, String name, String color, String salesPrice, String costPrice, String discountPercent, String stock, MultipartFile[] images, MultipartFile[] videos) {
         try {
-            VariantRequest variant = new VariantRequest();
-            variant.setSkuCode(skuCode);
-            variant.setName(name);
-            variant.setColor(color);
+            VariantRequest variant = new VariantRequest ();
+            variant.setSkuCode (skuCode);
+            variant.setName (name);
+            variant.setColor (color);
 
-            variant.setSalesPrice(Double.parseDouble(salesPrice));
-            variant.setCostPrice(Double.parseDouble(costPrice));
-            variant.setDiscountPercent(Double.parseDouble(discountPercent));
-            variant.setPriceAfterDiscount(variant.getSalesPrice() - (variant.getSalesPrice() * (variant.getDiscountPercent() / 100)));
+            variant.setSalesPrice (Double.parseDouble (salesPrice));
+            variant.setCostPrice (Double.parseDouble (costPrice));
+            variant.setDiscountPercent (Double.parseDouble (discountPercent));
+            variant.setPriceAfterDiscount (variant.getSalesPrice () - (variant.getSalesPrice () * (variant.getDiscountPercent () / 100)));
 
-            variant.setStock(Integer.parseInt(stock));
+            variant.setStock (Integer.parseInt (stock));
 
             // Upload Images immediately
             if (images != null && images.length > 0) {
                 List<String> imageUrls = new ArrayList<> ();
                 for (MultipartFile image : images) {
-                    Map uploadResult = cloudinary.uploader().upload(
-                            image.getBytes(),
-                            ObjectUtils.asMap("folder", "Saree/Images")
-                    );
+                    Map uploadResult = cloudinary.uploader ().upload (image.getBytes (), ObjectUtils.asMap ("folder", "Saree/Images"));
 
-                    imageUrls.add(uploadResult.get("url").toString());
+                    imageUrls.add (uploadResult.get ("url").toString ());
                 }
-                variant.setImageUrls(imageUrls); // <-- store URLs, not MultipartFile
+                variant.setImageUrls (imageUrls); // <-- store URLs, not MultipartFile
             }
 
             // Upload Video (only 1 allowed as per your rule)
             if (videos != null && videos.length > 0) {
-                Map uploadResult = cloudinary.uploader().upload(
-                        videos[0].getBytes(),
-                        ObjectUtils.asMap("folder", "Saree/Videos", "resource_type", "video")
-                );
+                Map uploadResult = cloudinary.uploader ().upload (videos[0].getBytes (), ObjectUtils.asMap ("folder", "Saree/Videos", "resource_type", "video"));
 
-                variant.setVideoUrl(uploadResult.get("url").toString()); // <-- single video URL
+                variant.setVideoUrl (uploadResult.get ("url").toString ()); // <-- single video URL
             }
 
-            sareeRequest.getVariants().add(variant);
-            return ResponseEntity.ok("Variant added successfully");
+            sareeRequest.getVariants ().add (variant);
+            return ResponseEntity.ok ("Variant added successfully");
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error adding variant: " + e.getMessage());
+            e.printStackTrace ();
+            return ResponseEntity.status (500).body ("Error adding variant: " + e.getMessage ());
         }
     }
 
@@ -87,23 +85,23 @@ public class SareeService {
             saree.setWeight (sareeRequest.getWeight ());
 
             List<Variant> variants = new ArrayList<> ();
-            for (VariantRequest vr : sareeRequest.getVariants()) {
-                Variant variant = new Variant();
-                variant.setSkuCode(vr.getSkuCode());
-                variant.setName(vr.getName());
-                variant.setColor(vr.getColor());
-                variant.setSalesPrice(vr.getSalesPrice());
-                variant.setCostPrice(vr.getCostPrice());
-                variant.setDiscountPercent(vr.getDiscountPercent());
-                variant.setPriceAfterDiscount(vr.getPriceAfterDiscount());
-                variant.setStock(vr.getStock());
+            for (VariantRequest vr : sareeRequest.getVariants ()) {
+                Variant variant = new Variant ();
+                variant.setSkuCode (vr.getSkuCode ());
+                variant.setName (vr.getName ());
+                variant.setColor (vr.getColor ());
+                variant.setSalesPrice (vr.getSalesPrice ());
+                variant.setCostPrice (vr.getCostPrice ());
+                variant.setDiscountPercent (vr.getDiscountPercent ());
+                variant.setPriceAfterDiscount (vr.getPriceAfterDiscount ());
+                variant.setStock (vr.getStock ());
 
                 // Already uploaded → just save URLs
-                variant.setImages(vr.getImageUrls());
-                variant.setVideos(vr.getVideoUrl());
+                variant.setImages (vr.getImageUrls ());
+                variant.setVideos (vr.getVideoUrl ());
 
-                variant.setSaree(saree);
-                variants.add(variant);
+                variant.setSaree (saree);
+                variants.add (variant);
             }
 
 
@@ -141,32 +139,82 @@ public class SareeService {
     }
 
 
-    public List<AllSareeResponse> filterSarees(String fabrics, String category, String color,
-                                               Double minPrice, Double maxPrice) {
+    public List<AllSareeResponse> filterSarees(String fabrics, String category, String color, Double minPrice, Double maxPrice) {
 
         // 1. Get sarees by fabrics & category
-        List<Saree> sarees = sareeRepo.findByFabricsAndCategory(fabrics, category);
+        List<Saree> sarees = sareeRepo.findByFabricsAndCategory (fabrics, category);
 
 
         // 2. Get filtered variants
-        List<Variant> filteredVariants = variantRepo.findFilteredVariants(fabrics, category, color, minPrice, maxPrice);
+        List<Variant> filteredVariants = variantRepo.findFilteredVariants (fabrics, category, color, minPrice, maxPrice);
 
 
         // 3. Create final DTO list
-        List<AllSareeResponse> responses  = new ArrayList<>();
+        List<AllSareeResponse> responses = new ArrayList<> ();
 
         for (Variant variant : filteredVariants) {
-            Saree saree = variant.getSaree();
+            Saree saree = variant.getSaree ();
 
             // show only this variant
-            saree.setVariants(List.of(variant));
+            saree.setVariants (List.of (variant));
 
-            AllSareeResponse dto = new AllSareeResponse();
-            dto.setSarees(saree);
-            responses.add(dto);
+            AllSareeResponse dto = new AllSareeResponse ();
+            dto.setSarees (saree);
+            responses.add (dto);
         }
 
         return responses;
     }
 
+    public List<AllSareeResponse> getLatestSarees() {
+        List<Saree> sarees = sareeRepo.findTop4ByOrderByCreatedAtDesc ();
+        List<AllSareeResponse> res = new ArrayList<> ();
+        for (Saree saree : sarees) {
+            AllSareeResponse sareeResponse = new AllSareeResponse ();
+            sareeResponse.setSarees (saree);
+            res.add (sareeResponse);
+        }
+
+        return res;
+    }
+
+    public List<VariantDto> getBydescount() {
+        List<Variant> variants = new ArrayList<> ();
+        double[][] ranges = {{5.0, 9.9}, {9.9, 14.9}, {14.9, 19.9}, {19.9, 50.99}};
+        for (double[] r : ranges) {
+            Variant v = variantRepo
+                    .findTop1ByDiscountPercentGreaterThanAndDiscountPercentLessThanOrderByDiscountPercentDesc (r[0], r[1]);
+            if (v != null) variants.add (v);
+        }
+
+        // convert to DTOs (Java 8 stream style)
+        return variants.stream ()
+                .map (VariantDto::new)
+                .toList ();
+    }
+
+    public List<VariantDto> getByVideo() {
+        List<Variant> variants = variantRepo.findTop10ByVideosIsNotNull ();
+
+        // convert to DTOs (Java 8 stream style)
+        return variants.stream ()
+                .map (VariantDto::new)
+                .toList ();
+    }
+
+    public List<VariantDto> getHighestSale() {
+        List<Variant> variants =  orderService.getHighestSale ();
+        return variants.stream ()
+                .map (VariantDto::new)
+                .toList ();
+    }
+
+    public List<VariantDto> getByColor() {
+        Pageable pageable = PageRequest.of(0, 4);
+        List<Variant> variants = variantRepo.findOneVariantPerColor(pageable);
+
+        return variants.stream ()
+                .map (VariantDto::new)
+                .toList ();
+    }
 }

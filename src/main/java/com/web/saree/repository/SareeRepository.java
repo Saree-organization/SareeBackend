@@ -11,4 +11,6 @@ import java.util.Set;
 public interface SareeRepository extends JpaRepository<Saree, Long> {
 
     List<Saree> findByFabricsAndCategory(String fabrics, String category);
+
+    List<Saree> findTop4ByOrderByCreatedAtDesc();
 }

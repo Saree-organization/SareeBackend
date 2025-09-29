@@ -6,13 +6,19 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.domain.Pageable;
 import java.util.List;
-import java.util.Optional;
+
 
 @Repository
 public interface VariantRepository extends JpaRepository<Variant, Long> {
 
     List<Variant> findBySareeId(Long sareeId);
+    Variant findTop1ByDiscountPercentGreaterThanAndDiscountPercentLessThanOrderByDiscountPercentDesc(
+            Double greater,
+            Double lesser
+    );
+
 
     @Query("""
        SELECT v FROM Variant v
@@ -28,5 +34,10 @@ public interface VariantRepository extends JpaRepository<Variant, Long> {
                                        @Param("color") String color,
                                        @Param("minPrice") Double minPrice,
                                        @Param("maxPrice") Double maxPrice);
+
+    List<Variant> findTop10ByVideosIsNotNull();
+
+    @Query(" SELECT v FROM Variant v WHERE v.id IN ( SELECT MIN(v2.id) FROM Variant v2  GROUP BY v2.color ) ")
+    List<Variant> findOneVariantPerColor(Pageable pageable);
 
 }
