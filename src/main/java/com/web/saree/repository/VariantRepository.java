@@ -28,12 +28,12 @@ public interface VariantRepository extends JpaRepository<Variant, Long> {
          AND (:color IS NULL OR v.color = :color)
          AND (:minPrice IS NULL OR v.priceAfterDiscount >= :minPrice)
          AND (:maxPrice IS NULL OR v.priceAfterDiscount <= :maxPrice)
+         AND (:discountPercent IS NULL OR v.discountPercent <= :discountPercent)
        """)
-    List<Variant> findFilteredVariants(@Param("fabrics") String fabrics,
-                                       @Param("category") String category,
-                                       @Param("color") String color,
-                                       @Param("minPrice") Double minPrice,
-                                       @Param("maxPrice") Double maxPrice);
+    List<Variant> findFilteredVariants(@Param("fabrics") String fabrics, @Param("category") String category,
+                                       @Param("color") String color, @Param("minPrice") Double minPrice,
+                                       @Param("maxPrice") Double maxPrice, @Param("discountPercent") Double discountPercent);
+
 
     List<Variant> findTop10ByVideosIsNotNull();
 

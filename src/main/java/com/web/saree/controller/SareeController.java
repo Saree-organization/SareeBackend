@@ -108,9 +108,11 @@ public class SareeController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice) {
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Double discount
+    ) {
         System.out.println ("fabrics: " + fabrics + " category: " + category + " color: " + color + " minPrice: " + minPrice + " maxPrice: " + maxPrice);
-        List<AllSareeResponse> result = sareeService.filterSarees (fabrics, category, color, minPrice, maxPrice);
+        List<AllSareeResponse> result = sareeService.filterSarees (fabrics, category, color, minPrice, maxPrice, discount);
 
         return ResponseEntity.ok (result);
     }

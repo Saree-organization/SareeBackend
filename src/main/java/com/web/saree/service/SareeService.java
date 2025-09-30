@@ -139,14 +139,14 @@ public class SareeService {
     }
 
 
-    public List<AllSareeResponse> filterSarees(String fabrics, String category, String color, Double minPrice, Double maxPrice) {
+    public List<AllSareeResponse> filterSarees(String fabrics, String category, String color, Double minPrice, Double maxPrice, Double discount) {
 
         // 1. Get sarees by fabrics & category
         List<Saree> sarees = sareeRepo.findByFabricsAndCategory (fabrics, category);
 
 
         // 2. Get filtered variants
-        List<Variant> filteredVariants = variantRepo.findFilteredVariants (fabrics, category, color, minPrice, maxPrice);
+        List<Variant> filteredVariants = variantRepo.findFilteredVariants (fabrics, category, color, minPrice, maxPrice, discount);
 
 
         // 3. Create final DTO list
@@ -212,7 +212,6 @@ public class SareeService {
     public List<VariantDto> getByColor() {
         Pageable pageable = PageRequest.of(0, 4);
         List<Variant> variants = variantRepo.findOneVariantPerColor(pageable);
-
         return variants.stream ()
                 .map (VariantDto::new)
                 .toList ();
