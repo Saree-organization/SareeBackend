@@ -87,8 +87,11 @@ public class PaymentController {
                 return ResponseEntity.status (HttpStatus.UNAUTHORIZED).body ("User not authenticated.");
             }
 
-            // यहाँ बदलाव करें: नए मेथड का उपयोग करें
-            List<Order> orders = orderRepository.findByEmailWithDetails (userDetails.getUsername ());
+            // ⭐ FIX: Filter to show only orders with "Success" payment status
+            List<Order> orders = orderRepository.findByUserEmailAndPaymentStatus (
+                    userDetails.getUsername (),
+                    "Success"
+            );
 
             List<OrderResponse> orderResponses = orders.stream ()
                     .map (order -> {
@@ -102,8 +105,6 @@ public class PaymentController {
                         List<OrderItemResponse> itemResponses = order.getItems ().stream ()
                                 .map (item -> {
                                     OrderItemResponse itemResponse = new OrderItemResponse ();
-
-                                    // ये लाइनें अब काम करेंगी क्योंकि variant डेटा पहले ही लोड हो चुका है
                                     itemResponse.setProductName (item.getVariant ().getName ());
 
                                     List<String> images = item.getVariant ().getImages ();
@@ -233,6 +234,26 @@ public class PaymentController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to fetch user."));
+        }
+    }
+    @PostMapping("/cancel-order")
+    public ResponseEntity<?> cancelOrder(@RequestBody Map<String, String> request) {
+        try {
+            String razorpayOrderId = request.get("razorpayOrderId");
+
+            if (razorpayOrderId == null || razorpayOrderId.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Razorpay Order ID is missing."));
+            }
+
+
+            paymentService.updateOrderStatusToCancelled(razorpayOrderId);
+
+            return ResponseEntity.ok(Map.of("message", "Order " + razorpayOrderId + " successfully marked as Cancelled."));
+        } catch (IllegalArgumentException e) {
+            // यह तब थ्रो होगा जब orderId नहीं मिलेगा
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to cancel order: " + e.getMessage()));
         }
     }
 

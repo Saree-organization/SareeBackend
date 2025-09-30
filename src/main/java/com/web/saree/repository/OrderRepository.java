@@ -9,11 +9,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
+
+    // Finds an Order by its Razorpay Order ID
     Optional<Order> findByRazorpayOrderId(String razorpayOrderId);
+
+    // Finds Orders by User Email, ordered by creation date descending
     List<Order> findByUserEmailOrderByCreatedAtDesc(String userEmail);
 
+    // Custom query to fetch Order, OrderItems, and Variant details for a user
     @Query("SELECT o FROM Order o JOIN FETCH o.items i JOIN FETCH i.variant v WHERE o.user.email = :userEmail ORDER BY o.createdAt DESC")
     List<Order> findByEmailWithDetails(@Param("userEmail") String userEmail);
 
-
+    // ⭐ CORRECTED METHOD: Finds Orders by User's Email (via User object) AND Payment Status
+    // This replaces the incorrect 'findByEmailAndPaymentStatus'
+    List<Order> findByUserEmailAndPaymentStatus(String email, String paymentStatus);
 }
