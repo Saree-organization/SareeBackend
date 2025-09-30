@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.web.saree.dto.request.SareeRequest.SareeRequest;
 import com.web.saree.dto.request.SareeRequest.VariantRequest;
+import com.web.saree.dto.response.VariantDto;
 import com.web.saree.dto.response.sareeResponse.AllSareeResponse;
 import com.web.saree.entity.Saree;
 import com.web.saree.entity.Variant;
@@ -22,6 +23,7 @@ import java.util.Map;
 @RequestMapping("/sarees")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173")
+
 public class SareeController {
     private final Cloudinary cloudinary;
     private final SareeService sareeService;
@@ -80,6 +82,16 @@ public class SareeController {
         }
     }
 
+    @GetMapping("/latestSarees")
+    private ResponseEntity<?> getLatestSarees() {
+        try {
+            return ResponseEntity.ok (sareeService.getLatestSarees ());
+        } catch (Exception e) {
+            e.printStackTrace ();
+            return ResponseEntity.status (500).body ("Error in getting latest sarees");
+        }
+    }
+
     @GetMapping("/{id}")
     private ResponseEntity<?> getSareeById(@PathVariable Long id) {
         try {
@@ -96,11 +108,36 @@ public class SareeController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice) {
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Double discount
+    ) {
         System.out.println ("fabrics: " + fabrics + " category: " + category + " color: " + color + " minPrice: " + minPrice + " maxPrice: " + maxPrice);
-        List<AllSareeResponse> result = sareeService.filterSarees (fabrics, category, color, minPrice, maxPrice);
+        List<AllSareeResponse> result = sareeService.filterSarees (fabrics, category, color, minPrice, maxPrice, discount);
 
         return ResponseEntity.ok (result);
     }
 
+    @GetMapping("/byDescount")
+    public ResponseEntity<List<VariantDto>> getSareesByDescount() {
+        List<VariantDto> result = sareeService.getBydescount ();
+        return ResponseEntity.ok (result);
+    }
+
+    @GetMapping("/byVideo")
+    public ResponseEntity<List<VariantDto>> getSareesByVideo() {
+        List<VariantDto> result = sareeService.getByVideo ();
+        return ResponseEntity.ok (result);
+    }
+
+    @GetMapping("/highestSales")
+    public ResponseEntity<List<VariantDto>> getHighestSale() {
+        List<VariantDto> result = sareeService.getHighestSale ();
+        return ResponseEntity.ok (result);
+    }
+
+    @GetMapping("/byColor")
+    public ResponseEntity<List<VariantDto>> getSareesByColor() {
+        List<VariantDto> result = sareeService.getByColor ();
+        return ResponseEntity.ok (result);
+    }
 }

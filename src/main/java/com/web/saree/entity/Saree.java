@@ -3,6 +3,7 @@ package com.web.saree.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -26,5 +27,6 @@ public class Saree {
 
     @OneToMany(mappedBy = "saree", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Variant> variants;
+    private LocalDateTime createdAt;
 
 }

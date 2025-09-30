@@ -11,12 +11,19 @@ public class VariantDto {
     private Long id;
     private String name;
     private String color;
+
+    private Double salesPrice;
+    private Double discountPercent;
     private Double priceAfterDiscount;
+
     private List<String> images;
+    private String videos;
 
     // Saree details needed for display
     private String sareeDesign;
     private String sareeCategory;
+
+    private Long sareeId;
 
     public VariantDto(Variant variant) {
         this.id = variant.getId();
@@ -24,10 +31,17 @@ public class VariantDto {
         this.color = variant.getColor();
         this.priceAfterDiscount = variant.getPriceAfterDiscount();
         this.images = variant.getImages();
+        this.videos = variant.getVideos();
+
+        this.salesPrice = variant.getSalesPrice();
+        this.discountPercent = variant.getDiscountPercent();
+        this.priceAfterDiscount = variant.getPriceAfterDiscount();
+
 
         if (variant.getSaree() != null) {
             this.sareeDesign = variant.getSaree().getDesign();
             this.sareeCategory = variant.getSaree().getCategory();
+            this.sareeId = variant.getSaree().getId();
         }
     }
 }
