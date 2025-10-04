@@ -117,7 +117,7 @@ public class SareeController {
         return ResponseEntity.ok (result);
     }
 
-    @GetMapping("/byDescount")
+    @GetMapping("/byDiscount")
     public ResponseEntity<List<VariantDto>> getSareesByDescount() {
         List<VariantDto> result = sareeService.getBydescount ();
         return ResponseEntity.ok (result);
