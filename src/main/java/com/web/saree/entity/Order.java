@@ -31,6 +31,7 @@ public class Order {
     private String orderStatus;// "Shipping, "OutOf Delivery, Delivered, Exchange,Exchanged"
 
     private LocalDateTime createdAt;
+    private Long shippingAddressId;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference // Establishes the parent-child relationship with OrderItem
