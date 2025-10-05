@@ -115,8 +115,6 @@ public class SareeController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        System.out.println("fabrics: " + fabrics + " category: " + category + " color: " + color +
-                " minPrice: " + minPrice + " maxPrice: " + maxPrice + " page: " + page + " size: " + size);
 
         // Call service method that returns Page<AllSareeResponse>
         Page<AllSareeResponse> sareePage = sareeService.filterSarees(fabrics, category, color, minPrice, maxPrice, discount, page, size);
@@ -132,9 +130,9 @@ public class SareeController {
     }
 
 
-    @GetMapping("/byDescount")
-    public ResponseEntity<List<VariantDto>> getSareesByDescount() {
-        List<VariantDto> result = sareeService.getBydescount ();
+    @GetMapping("/byDiscount")
+    public ResponseEntity<List<VariantDto>> getSareesByDiscount() {
+        List<VariantDto> result = sareeService.getByDiscount ();
         return ResponseEntity.ok (result);
     }
 

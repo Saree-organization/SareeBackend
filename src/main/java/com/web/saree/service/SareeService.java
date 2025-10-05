@@ -12,10 +12,7 @@ import com.web.saree.entity.Variant;
 import com.web.saree.repository.SareeRepository;
 import com.web.saree.repository.VariantRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -141,30 +139,26 @@ public class SareeService {
     }
 
 
-    public Page<AllSareeResponse> filterSarees(String fabrics, String category, String color,
-                                               Double minPrice, Double maxPrice, Double discount,
-                                               int page, int size) {
+    public Page<AllSareeResponse> filterSarees(
+            String fabrics, String category, String color,
+            Double minPrice, Double maxPrice, Double discount,
+            int page, int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("s.createdAt").descending());
 
-        // 1. Get filtered variants
-        List<Variant> filteredVariants = variantRepo.findFilteredVariants(fabrics, category, color, minPrice, maxPrice, discount);
+        Page<Variant> variantPage = variantRepo.findFilteredVariants(fabrics, category, color, minPrice, maxPrice, discount, pageable );
 
-        // 2. Convert to DTO
-        List<AllSareeResponse> responses = new ArrayList<>();
-        for (Variant variant : filteredVariants) {
+        List<AllSareeResponse> responses = variantPage.getContent().stream().map(variant -> {
             Saree saree = variant.getSaree();
-            saree.setVariants(List.of(variant)); // show only this variant
+            saree.setVariants(List.of(variant));
             AllSareeResponse dto = new AllSareeResponse();
             dto.setSarees(saree);
-            responses.add(dto);
-        }
+            return dto;
+        }).collect(Collectors.toList());
 
-        // 3. Handle pagination manually
-        int start = Math.min(page * size, responses.size());
-        int end = Math.min(start + size, responses.size());
-        List<AllSareeResponse> pageContent = responses.subList(start, end);
-
-        return new PageImpl<> (pageContent, PageRequest.of(page, size), responses.size());
+        return new PageImpl<>(responses, pageable, variantPage.getTotalElements());
     }
+
 
     public List<AllSareeResponse> getLatestSarees() {
         List<Saree> sarees = sareeRepo.findTop4ByOrderByCreatedAtDesc ();
@@ -178,7 +172,7 @@ public class SareeService {
         return res;
     }
 
-    public List<VariantDto> getBydescount() {
+    public List<VariantDto> getByDiscount() {
         List<Variant> variants = new ArrayList<> ();
         double[][] ranges = {{5.0, 9.9}, {9.9, 14.9}, {14.9, 19.9}, {19.9, 50.99}};
         for (double[] r : ranges) {
@@ -203,7 +197,7 @@ public class SareeService {
     }
 
     public List<VariantDto> getHighestSale() {
-        List<Variant> variants =  orderService.getHighestSale ();
+        List<Variant> variants = orderService.getHighestSale ();
         return variants.stream ()
                 .map (VariantDto::new)
                 .toList ();
