@@ -1,10 +1,13 @@
 package com.web.saree.repository;
 
 import com.web.saree.entity.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,5 +25,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // ⭐ CORRECTED METHOD: Finds Orders by User's Email (via User object) AND Payment Status
     // This replaces the incorrect 'findByEmailAndPaymentStatus'
-    List<Order> findByUserEmailAndPaymentStatus(String email, String paymentStatus);
+    Page<Order> findByUserEmailAndPaymentStatus(String email, String paymentStatus, Pageable pageable);
+
+    Page<Order> findByOrderStatus(String status, Pageable pageable);
+
+    Page<Order> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+
+    Page<Order> findByOrderStatusAndCreatedAtBetween(String status, LocalDateTime start, LocalDateTime end, Pageable pageable);
+
 }

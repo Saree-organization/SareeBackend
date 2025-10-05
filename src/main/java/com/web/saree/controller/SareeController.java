@@ -11,11 +11,13 @@ import com.web.saree.entity.Variant;
 import com.web.saree.service.SareeService;
 import com.web.saree.service.VariantService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -102,20 +104,33 @@ public class SareeController {
         }
     }
 
-    @GetMapping("/filter")
-    public ResponseEntity<List<AllSareeResponse>> filterSarees(
+    @GetMapping("/filters")
+    public ResponseEntity<?> filterSarees(
             @RequestParam(required = false) String fabrics,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Double discount
+            @RequestParam(required = false) Double discount,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        System.out.println ("fabrics: " + fabrics + " category: " + category + " color: " + color + " minPrice: " + minPrice + " maxPrice: " + maxPrice);
-        List<AllSareeResponse> result = sareeService.filterSarees (fabrics, category, color, minPrice, maxPrice, discount);
+        System.out.println("fabrics: " + fabrics + " category: " + category + " color: " + color +
+                " minPrice: " + minPrice + " maxPrice: " + maxPrice + " page: " + page + " size: " + size);
 
-        return ResponseEntity.ok (result);
+        // Call service method that returns Page<AllSareeResponse>
+        Page<AllSareeResponse> sareePage = sareeService.filterSarees(fabrics, category, color, minPrice, maxPrice, discount, page, size);
+
+        // Prepare response
+        Map<String, Object> response = new HashMap<> ();
+        response.put("sarees", sareePage.getContent());
+        response.put("currentPage", sareePage.getNumber());
+        response.put("totalItems", sareePage.getTotalElements());
+        response.put("totalPages", sareePage.getTotalPages());
+
+        return ResponseEntity.ok(response);
     }
+
 
     @GetMapping("/byDescount")
     public ResponseEntity<List<VariantDto>> getSareesByDescount() {

@@ -12,6 +12,8 @@ import com.web.saree.entity.Variant;
 import com.web.saree.repository.SareeRepository;
 import com.web.saree.repository.VariantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -139,31 +141,29 @@ public class SareeService {
     }
 
 
-    public List<AllSareeResponse> filterSarees(String fabrics, String category, String color, Double minPrice, Double maxPrice, Double discount) {
+    public Page<AllSareeResponse> filterSarees(String fabrics, String category, String color,
+                                               Double minPrice, Double maxPrice, Double discount,
+                                               int page, int size) {
 
-        // 1. Get sarees by fabrics & category
-        List<Saree> sarees = sareeRepo.findByFabricsAndCategory (fabrics, category);
+        // 1. Get filtered variants
+        List<Variant> filteredVariants = variantRepo.findFilteredVariants(fabrics, category, color, minPrice, maxPrice, discount);
 
-
-        // 2. Get filtered variants
-        List<Variant> filteredVariants = variantRepo.findFilteredVariants (fabrics, category, color, minPrice, maxPrice, discount);
-
-
-        // 3. Create final DTO list
-        List<AllSareeResponse> responses = new ArrayList<> ();
-
+        // 2. Convert to DTO
+        List<AllSareeResponse> responses = new ArrayList<>();
         for (Variant variant : filteredVariants) {
-            Saree saree = variant.getSaree ();
-
-            // show only this variant
-            saree.setVariants (List.of (variant));
-
-            AllSareeResponse dto = new AllSareeResponse ();
-            dto.setSarees (saree);
-            responses.add (dto);
+            Saree saree = variant.getSaree();
+            saree.setVariants(List.of(variant)); // show only this variant
+            AllSareeResponse dto = new AllSareeResponse();
+            dto.setSarees(saree);
+            responses.add(dto);
         }
 
-        return responses;
+        // 3. Handle pagination manually
+        int start = Math.min(page * size, responses.size());
+        int end = Math.min(start + size, responses.size());
+        List<AllSareeResponse> pageContent = responses.subList(start, end);
+
+        return new PageImpl<> (pageContent, PageRequest.of(page, size), responses.size());
     }
 
     public List<AllSareeResponse> getLatestSarees() {
