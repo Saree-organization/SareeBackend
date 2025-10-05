@@ -15,11 +15,19 @@ import com.web.saree.security.CustomUserDetails;
 import com.web.saree.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -81,50 +89,65 @@ public class PaymentController {
     }
 
     @GetMapping("/orders")
-    public ResponseEntity<?> getOrders(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<?> getOrders(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size // default 5 orders per page
+    ) {
         try {
             if (userDetails == null) {
-                return ResponseEntity.status (HttpStatus.UNAUTHORIZED).body ("User not authenticated.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("User not authenticated.");
             }
 
-            // ⭐ FIX: Filter to show only orders with "Success" payment status
-            List<Order> orders = orderRepository.findByUserEmailAndPaymentStatus (
-                    userDetails.getUsername (),
-                    "Success"
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+            Page<Order> orderPage = orderRepository.findByUserEmailAndPaymentStatus(
+                    userDetails.getUsername(),
+                    "Success",
+                    pageable
             );
 
-            List<OrderResponse> orderResponses = orders.stream ()
-                    .map (order -> {
-                        OrderResponse orderResponse = new OrderResponse ();
-                        orderResponse.setRazorpayOrderId (order.getRazorpayOrderId ());
-                        orderResponse.setTotalAmount (order.getTotalAmount ());
+            List<OrderResponse> orderResponses = orderPage.getContent().stream()
+                    .map(order -> {
+                        OrderResponse orderResponse = new OrderResponse();
+                        orderResponse.setRazorpayOrderId(order.getRazorpayOrderId());
+                        orderResponse.setTotalAmount(order.getTotalAmount());
                         orderResponse.setPaymentStatus(order.getPaymentStatus());
-                        orderResponse.setOrderStatus(order.getOrderStatus ());
-                        orderResponse.setCreatedAt (order.getCreatedAt ());
+                        orderResponse.setOrderStatus(order.getOrderStatus());
+                        orderResponse.setCreatedAt(order.getCreatedAt());
 
-                        List<OrderItemResponse> itemResponses = order.getItems ().stream ()
-                                .map (item -> {
-                                    OrderItemResponse itemResponse = new OrderItemResponse ();
-                                    itemResponse.setProductName (item.getVariant ().getName ());
+                        List<OrderItemResponse> itemResponses = order.getItems().stream()
+                                .map(item -> {
+                                    OrderItemResponse itemResponse = new OrderItemResponse();
+                                    itemResponse.setProductName(item.getVariant().getName());
 
-                                    List<String> images = item.getVariant ().getImages ();
-                                    if (images != null && !images.isEmpty ()) {
-                                        itemResponse.setImageUrl (images.get (0));
+                                    List<String> images = item.getVariant().getImages();
+                                    if (images != null && !images.isEmpty()) {
+                                        itemResponse.setImageUrl(images.get(0));
                                     }
 
-                                    itemResponse.setQuantity (item.getQuantity ());
-                                    itemResponse.setPrice (item.getPrice ());
+                                    itemResponse.setQuantity(item.getQuantity());
+                                    itemResponse.setPrice(item.getPrice());
                                     return itemResponse;
                                 })
-                                .collect (Collectors.toList ());
-                        orderResponse.setItems (itemResponses);
+                                .collect(Collectors.toList());
+                        orderResponse.setItems(itemResponses);
                         return orderResponse;
                     })
-                    .collect (Collectors.toList ());
+                    .collect(Collectors.toList());
 
-            return ResponseEntity.ok (orderResponses);
+            Map<String, Object> response = new HashMap<>();
+            response.put("orders", orderResponses);
+            response.put("currentPage", orderPage.getNumber());
+            response.put("totalPages", orderPage.getTotalPages());
+            response.put("totalItems", orderPage.getTotalElements());
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            return ResponseEntity.status (HttpStatus.INTERNAL_SERVER_ERROR).body (Map.of ("message", "Failed to fetch orders."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to fetch orders."));
         }
     }
 
@@ -173,49 +196,74 @@ public class PaymentController {
             return ResponseEntity.status (HttpStatus.INTERNAL_SERVER_ERROR).body (Map.of ("message", "Failed to fetch orders."));
         }
     }
-
-
     @GetMapping("/admin-orders")
-    public ResponseEntity<?> getAllOrdersForAdmin() {
+    public ResponseEntity<?> getAllOrdersForAdmin(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
         try {
-            List<Order> orders = orderRepository.findAll ();
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            Page<Order> orderPage;
 
-            List<OrderResponse> orderResponses = orders.stream ()
-                    .map (order -> {
-                        OrderResponse orderResponse = new OrderResponse ();
-                        orderResponse.setUserId (order.getUser ().getId ());
-                        orderResponse.setRazorpayOrderId (order.getRazorpayOrderId ());
-                        orderResponse.setTotalAmount (order.getTotalAmount ());
+            if (status != null && date != null) {
+                LocalDateTime startOfDay = date.atStartOfDay();
+                LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+                orderPage = orderRepository.findByOrderStatusAndCreatedAtBetween(status, startOfDay, endOfDay, pageable);
+            } else if (status != null) {
+                orderPage = orderRepository.findByOrderStatus(status, pageable);
+            } else if (date != null) {
+                LocalDateTime startOfDay = date.atStartOfDay();
+                LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+                orderPage = orderRepository.findByCreatedAtBetween(startOfDay, endOfDay, pageable);
+            } else {
+                orderPage = orderRepository.findAll(pageable);
+            }
+
+            List<OrderResponse> orderResponses = orderPage.getContent().stream()
+                    .map(order -> {
+                        OrderResponse orderResponse = new OrderResponse();
+                        orderResponse.setUserId(order.getUser().getId());
+                        orderResponse.setRazorpayOrderId(order.getRazorpayOrderId());
+                        orderResponse.setTotalAmount(order.getTotalAmount());
                         orderResponse.setPaymentStatus(order.getPaymentStatus());
-                        orderResponse.setOrderStatus(order.getOrderStatus ());
-                        orderResponse.setCreatedAt (order.getCreatedAt ());
+                        orderResponse.setOrderStatus(order.getOrderStatus());
+                        orderResponse.setCreatedAt(order.getCreatedAt());
 
-                        List<OrderItemResponse> itemResponses = order.getItems ().stream ()
-                                .map (item -> {
-                                    OrderItemResponse itemResponse = new OrderItemResponse ();
-                                    itemResponse.setProductName (item.getVariant ().getName ());
+                        List<OrderItemResponse> itemResponses = order.getItems().stream()
+                                .map(item -> {
+                                    OrderItemResponse itemResponse = new OrderItemResponse();
+                                    itemResponse.setProductName(item.getVariant().getName());
 
-                                    List<String> images = item.getVariant ().getImages ();
-                                    if (images != null && !images.isEmpty ()) {
-                                        itemResponse.setImageUrl (images.get (0));
+                                    List<String> images = item.getVariant().getImages();
+                                    if (images != null && !images.isEmpty()) {
+                                        itemResponse.setImageUrl(images.get(0));
                                     }
 
-                                    itemResponse.setQuantity (item.getQuantity ());
-                                    itemResponse.setPrice (item.getPrice ());
+                                    itemResponse.setQuantity(item.getQuantity());
+                                    itemResponse.setPrice(item.getPrice());
                                     return itemResponse;
                                 })
-                                .collect (Collectors.toList ());
-                        orderResponse.setItems (itemResponses);
+                                .collect(Collectors.toList());
+                        orderResponse.setItems(itemResponses);
                         return orderResponse;
                     })
-                    .collect (Collectors.toList ());
+                    .collect(Collectors.toList());
 
-            return ResponseEntity.ok (orderResponses);
+            Map<String, Object> response = new HashMap<>();
+            response.put("orders", orderResponses);
+            response.put("currentPage", orderPage.getNumber());
+            response.put("totalItems", orderPage.getTotalElements());
+            response.put("totalPages", orderPage.getTotalPages());
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status (HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body (Map.of ("message", "Failed to fetch all orders."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to fetch orders."));
         }
     }
+
 
     @GetMapping("/admin/user/{userId}")
     public ResponseEntity<?> getUser(@PathVariable("userId") Long userId) {

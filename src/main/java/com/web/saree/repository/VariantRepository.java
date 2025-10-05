@@ -1,6 +1,7 @@
 package com.web.saree.repository;
 
 import com.web.saree.entity.Variant;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,9 +31,11 @@ public interface VariantRepository extends JpaRepository<Variant, Long> {
          AND (:maxPrice IS NULL OR v.priceAfterDiscount <= :maxPrice)
          AND (:discountPercent IS NULL OR v.discountPercent <= :discountPercent)
        """)
-    List<Variant> findFilteredVariants(@Param("fabrics") String fabrics, @Param("category") String category,
+    Page<Variant> findFilteredVariants(@Param("fabrics") String fabrics, @Param("category") String category,
+
                                        @Param("color") String color, @Param("minPrice") Double minPrice,
-                                       @Param("maxPrice") Double maxPrice, @Param("discountPercent") Double discountPercent);
+                                       @Param("maxPrice") Double maxPrice, @Param("discountPercent") Double discountPercent,
+                                       Pageable pageable);
 
 
     List<Variant> findTop10ByVideosIsNotNull();
