@@ -9,6 +9,7 @@ import com.web.saree.dto.response.UserResponse;
 import com.web.saree.entity.Order;
 import com.web.saree.entity.OrderItem;
 import com.web.saree.entity.Users;
+import com.web.saree.repository.OrderItemRepository;
 import com.web.saree.repository.OrderRepository;
 import com.web.saree.service.PaymentService;
 import com.web.saree.security.CustomUserDetails;
@@ -32,6 +33,7 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final OrderRepository orderRepository;
     private final UserService userService;
+    private final OrderItemRepository orderItemRepository; // <-- Add this line
 
     // ******************************************************
     // *** यहाँ बदलाव किया गया है: shippingAddressId को पास करना ***
@@ -84,49 +86,89 @@ public class PaymentController {
     public ResponseEntity<?> getOrders(@AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
             if (userDetails == null) {
-                return ResponseEntity.status (HttpStatus.UNAUTHORIZED).body ("User not authenticated.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
             }
 
-            // ⭐ FIX: Filter to show only orders with "Success" payment status
-            List<Order> orders = orderRepository.findByUserEmailAndPaymentStatus (
-                    userDetails.getUsername (),
+            List<Order> orders = orderRepository.findByUserEmailAndPaymentStatus(
+                    userDetails.getUsername(),
                     "Success"
             );
 
-            List<OrderResponse> orderResponses = orders.stream ()
-                    .map (order -> {
-                        OrderResponse orderResponse = new OrderResponse ();
-                        orderResponse.setRazorpayOrderId (order.getRazorpayOrderId ());
-                        orderResponse.setTotalAmount (order.getTotalAmount ());
+            List<OrderResponse> orderResponses = orders.stream()
+                    .map(order -> {
+                        OrderResponse orderResponse = new OrderResponse();
+                        orderResponse.setRazorpayOrderId(order.getRazorpayOrderId());
+                        orderResponse.setTotalAmount(order.getTotalAmount());
                         orderResponse.setPaymentStatus(order.getPaymentStatus());
-                        orderResponse.setOrderStatus(order.getOrderStatus ());
-                        orderResponse.setCreatedAt (order.getCreatedAt ());
+                        orderResponse.setOrderStatus(order.getOrderStatus());
+                        orderResponse.setCreatedAt(order.getCreatedAt());
 
-                        List<OrderItemResponse> itemResponses = order.getItems ().stream ()
-                                .map (item -> {
-                                    OrderItemResponse itemResponse = new OrderItemResponse ();
-                                    itemResponse.setProductName (item.getVariant ().getName ());
+                        List<OrderItemResponse> itemResponses = order.getItems().stream()
+                                .map(item -> {
+                                    OrderItemResponse itemResponse = new OrderItemResponse();
 
-                                    List<String> images = item.getVariant ().getImages ();
-                                    if (images != null && !images.isEmpty ()) {
-                                        itemResponse.setImageUrl (images.get (0));
+                                    // ⭐ FIX: OrderItem ID सेट करें (Exchange के लिए CRITICAL)
+                                    itemResponse.setOrderItemId(item.getId());
+
+                                    itemResponse.setProductName(item.getVariant().getName());
+
+                                    List<String> images = item.getVariant().getImages();
+                                    if (images != null && !images.isEmpty()) {
+                                        itemResponse.setImageUrl(images.get(0));
                                     }
 
-                                    itemResponse.setQuantity (item.getQuantity ());
-                                    itemResponse.setPrice (item.getPrice ());
+                                    itemResponse.setQuantity(item.getQuantity());
+                                    itemResponse.setPrice(item.getPrice());
                                     return itemResponse;
                                 })
-                                .collect (Collectors.toList ());
-                        orderResponse.setItems (itemResponses);
+                                .collect(Collectors.toList());
+                        orderResponse.setItems(itemResponses);
                         return orderResponse;
                     })
-                    .collect (Collectors.toList ());
+                    .collect(Collectors.toList());
 
-            return ResponseEntity.ok (orderResponses);
+            return ResponseEntity.ok(orderResponses);
         } catch (Exception e) {
+            // ... (Error handling)
             return ResponseEntity.status (HttpStatus.INTERNAL_SERVER_ERROR).body (Map.of ("message", "Failed to fetch orders."));
         }
     }
+    // ⭐ NEW API: Exchange Form के लिए एक विशिष्ट Order Item का विवरण प्राप्त करना
+    @GetMapping("/order-item/{orderItemId}")
+    public ResponseEntity<?> getOrderItemDetails(@PathVariable Long orderItemId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try {
+            if (userDetails == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+            }
+
+            OrderItem item = orderItemRepository.findById(orderItemId)
+                    .orElseThrow(() -> new IllegalArgumentException("Order Item not found."));
+
+            // सुरक्षा जांच: सुनिश्चित करें कि यह आइटम authenticated user का है
+            if (!item.getOrder().getUser().getEmail().equals(userDetails.getUsername())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied to this order item.");
+            }
+
+            // OrderItemResponse DTO में डेटा मैप करें (इसे सीधे OrderItem Entity न दिखाएं)
+            OrderItemResponse itemResponse = new OrderItemResponse();
+            itemResponse.setOrderItemId(item.getId());
+            itemResponse.setProductName(item.getVariant().getName());
+            itemResponse.setQuantity(item.getQuantity());
+            itemResponse.setPrice(item.getPrice());
+
+            // वेरिएंट की अन्य जानकारी जो Frontend को चाहिए (जैसे priceAfterDiscount, ID)
+            // 💡 Note: यदि Variant की पूरी जानकारी चाहिए, तो आपको एक नया DTO (जैसे VariantExchangeDetailsDTO) बनाना होगा
+
+            return ResponseEntity.ok(itemResponse);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to fetch order item details."));
+        }
+    }
+
+
 
     @GetMapping("/admin/user-orders/{userId}")
     public ResponseEntity<?> getUserOrders(@PathVariable("userId") Long userId) {

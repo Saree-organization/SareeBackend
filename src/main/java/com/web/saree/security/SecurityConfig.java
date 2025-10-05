@@ -42,14 +42,16 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Permit all requests to your authentication endpoints and the public sarees endpoint
-                        .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
-                        // Permit other public endpoints
+
+                        // PUBLIC ACCESS: Authentication, Images, and ALL /sarees endpoints (including /sarees/allVariants)
+                        // Note: The /sarees/** covers /sarees/allVariants. We'll rely on this.
+                        .requestMatchers("/api/auth/**", "/sarees/**", "/public/**", "/images/**").permitAll()
+
+                        // AUTHENTICATED ACCESS: Wishlist, Cart, Payment, Exchange
                         .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
-                        .requestMatchers("/public/**", "/images/**").permitAll()
-                        // New: Authorize payment endpoints
-                        .requestMatchers("/api/payment/**").authenticated()
-                        // Require authentication for all other requests
+                        .requestMatchers("/api/payment/**", "/api/exchange/**").authenticated()
+
+                        // Require authentication for all remaining requests (e.g., /api/admin/**)
                         .anyRequest().authenticated()
                 );
 
@@ -58,7 +60,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

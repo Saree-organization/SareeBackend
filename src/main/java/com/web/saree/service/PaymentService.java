@@ -4,15 +4,14 @@ import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import com.razorpay.Utils;
-import com.web.saree.entity.CartItem;
-import com.web.saree.entity.OrderItem;
-import com.web.saree.entity.Users;
+import com.web.saree.entity.*;
 import com.web.saree.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +32,7 @@ public class PaymentService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final VariantRepository variantRepository;
+    private final ExchangeRequestRepository exchangeRepo;
 
     @Transactional
     public Map<String, Object> createRazorpayOrder(String userEmail, Double amount,Long shippingAddressId) throws RazorpayException {
@@ -146,6 +146,75 @@ public class PaymentService {
             order.setOrderStatus("Cancelled");
 
             orderRepository.save(order);
+        }
+    }
+    // ⭐ NEW: Exchange Payment Order Creation
+    @Transactional
+    public Map<String, Object> createExchangePaymentOrder(Long exchangeRequestId, Double amount) throws RazorpayException {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero for exchange payment.");
+        }
+
+        ExchangeRequest request = exchangeRepo.findById(exchangeRequestId)
+                .orElseThrow(() -> new IllegalArgumentException("Exchange Request not found: " + exchangeRequestId));
+
+        // 1. Razorpay Client
+        RazorpayClient razorpayClient = new RazorpayClient(keyId, keySecret);
+
+        // 2. Create Razorpay order for the difference amount
+        JSONObject orderRequest = new JSONObject();
+        orderRequest.put("amount", (int) (amount * 100));
+        orderRequest.put("currency", "INR");
+        orderRequest.put("receipt", "exchange_receipt#" + request.getId());
+
+        Order razorpayOrder = razorpayClient.orders.create(orderRequest);
+
+        // 3. Update the ExchangeRequest entity with Razorpay Order ID
+        request.setRazorpayOrderId(razorpayOrder.get("id"));
+        request.setPaymentStatus("RAZORPAY_CREATED");
+
+        exchangeRepo.save(request);
+
+        return Map.of(
+                "razorpayOrderId", razorpayOrder.get("id"),
+                "amount", razorpayOrder.get("amount"),
+                "currency", razorpayOrder.get("currency")
+        );
+    }
+
+    // ⭐ NEW: Exchange Payment Verification
+    @Transactional
+    public boolean verifyExchangePayment(String razorpayOrderId, String razorpayPaymentId, String razorpaySignature) throws RazorpayException {
+        ExchangeRequest request = exchangeRepo.findByRazorpayOrderId(razorpayOrderId)
+                .orElseThrow(() -> new IllegalArgumentException("Exchange Request not found with Razorpay Order ID: " + razorpayOrderId));
+
+        JSONObject options = new JSONObject();
+        options.put("razorpay_order_id", razorpayOrderId);
+        options.put("razorpay_payment_id", razorpayPaymentId);
+        options.put("razorpay_signature", razorpaySignature);
+
+        boolean isVerified = Utils.verifyPaymentSignature(options, keySecret);
+
+        if (isVerified) {
+            request.setPaymentStatus("SUCCESS");
+            request.setExchangeStatus("APPROVED_PICKUP_PENDING"); // Payment successful, ready for pickup
+            request.setRazorpayPaymentId(razorpayPaymentId);
+            request.setRazorpaySignature(razorpaySignature);
+            exchangeRepo.save(request);
+
+            // ⭐ Stock Reservation is done here when payment is successful
+            // Note: This was handled differently in my previous suggestion, but now it's safer to reserve stock only after payment success.
+            Variant newVariant = request.getNewVariant();
+            int orderedQuantity = request.getOldOrderItem().getQuantity();
+            newVariant.setStock(newVariant.getStock() - orderedQuantity);
+            variantRepository.save(newVariant);
+
+            return true;
+        } else {
+            request.setPaymentStatus("FAILED");
+            request.setExchangeStatus("REJECTED_PAYMENT_FAILED");
+            exchangeRepo.save(request);
+            return false;
         }
     }
 }
