@@ -57,6 +57,9 @@ public class PaymentService {
         // 💡 NOTE: You should set ShippingAddress ID here if the field exists on Order entity
         // (e.g., newOrder.setShippingAddressId(shippingAddressId);)
 
+
+
+
         com.web.saree.entity.Order savedOrder = orderRepository.save(newOrder);
 
         // 2. Save each cart item to OrderItems table

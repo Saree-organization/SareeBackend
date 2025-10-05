@@ -130,6 +130,7 @@ public class SareeController {
     }
 
 
+
     @GetMapping("/byDiscount")
     public ResponseEntity<List<VariantDto>> getSareesByDiscount() {
         List<VariantDto> result = sareeService.getByDiscount ();
