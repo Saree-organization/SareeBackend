@@ -152,50 +152,66 @@ public class PaymentController {
     }
 
     @GetMapping("/admin/user-orders/{userId}")
-    public ResponseEntity<?> getUserOrders(@PathVariable("userId") Long userId) {
+    public ResponseEntity<?> getUserOrders(
+            @PathVariable("userId") Long userId,
+            @RequestParam(defaultValue = "0") int page,   // page index (starts at 0)
+            @RequestParam(defaultValue = "10") int size   // page size
+    ) {
         try {
-            String gmail = userService.getUserById (userId);
-            if (gmail == null || gmail.isEmpty ())
-                return ResponseEntity.status (HttpStatus.UNAUTHORIZED).body ("User not authenticated.");
+            String gmail = userService.getUserById(userId);
+            if (gmail == null || gmail.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("User not authenticated.");
+            }
 
-            List<Order> orders = orderRepository.findByEmailWithDetails (gmail);
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            Page<Order> ordersPage = orderRepository.findByEmailWithDetails(gmail, pageable);
 
-            List<OrderResponse> orderResponses = orders.stream ()
-                    .map (order -> {
-                        OrderResponse orderResponse = new OrderResponse ();
-                        orderResponse.setRazorpayOrderId (order.getRazorpayOrderId ());
-                        orderResponse.setTotalAmount (order.getTotalAmount ());
+            List<OrderResponse> orderResponses = ordersPage.getContent().stream()
+                    .map(order -> {
+                        OrderResponse orderResponse = new OrderResponse();
+                        orderResponse.setRazorpayOrderId(order.getRazorpayOrderId());
+                        orderResponse.setTotalAmount(order.getTotalAmount());
                         orderResponse.setPaymentStatus(order.getPaymentStatus());
-                        orderResponse.setOrderStatus(order.getOrderStatus ());
-                        orderResponse.setCreatedAt (order.getCreatedAt ());
+                        orderResponse.setOrderStatus(order.getOrderStatus());
+                        orderResponse.setCreatedAt(order.getCreatedAt());
 
-                        List<OrderItemResponse> itemResponses = order.getItems ().stream ()
-                                .map (item -> {
-                                    OrderItemResponse itemResponse = new OrderItemResponse ();
+                        List<OrderItemResponse> itemResponses = order.getItems().stream()
+                                .map(item -> {
+                                    OrderItemResponse itemResponse = new OrderItemResponse();
+                                    itemResponse.setProductName(item.getVariant().getName());
 
-                                    // ये लाइनें अब काम करेंगी क्योंकि variant डेटा पहले ही लोड हो चुका है
-                                    itemResponse.setProductName (item.getVariant ().getName ());
-
-                                    List<String> images = item.getVariant ().getImages ();
-                                    if (images != null && !images.isEmpty ()) {
-                                        itemResponse.setImageUrl (images.get (0));
+                                    List<String> images = item.getVariant().getImages();
+                                    if (images != null && !images.isEmpty()) {
+                                        itemResponse.setImageUrl(images.get(0));
                                     }
 
-                                    itemResponse.setQuantity (item.getQuantity ());
-                                    itemResponse.setPrice (item.getPrice ());
+                                    itemResponse.setQuantity(item.getQuantity());
+                                    itemResponse.setPrice(item.getPrice());
                                     return itemResponse;
                                 })
-                                .collect (Collectors.toList ());
-                        orderResponse.setItems (itemResponses);
+                                .collect(Collectors.toList());
+
+                        orderResponse.setItems(itemResponses);
                         return orderResponse;
                     })
-                    .collect (Collectors.toList ());
+                    .collect(Collectors.toList());
 
-            return ResponseEntity.ok (orderResponses);
+            // return both data + pagination info
+            Map<String, Object> response = new HashMap<>();
+            response.put("orders", orderResponses);
+            response.put("currentPage", ordersPage.getNumber());
+            response.put("totalItems", ordersPage.getTotalElements());
+            response.put("totalPages", ordersPage.getTotalPages());
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            return ResponseEntity.status (HttpStatus.INTERNAL_SERVER_ERROR).body (Map.of ("message", "Failed to fetch orders."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to fetch orders."));
         }
     }
+
 
     @GetMapping("/admin-orders")
     public ResponseEntity<?> getAllOrdersForAdmin(

@@ -23,6 +23,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o JOIN FETCH o.items i JOIN FETCH i.variant v WHERE o.user.email = :userEmail ORDER BY o.createdAt DESC")
     List<Order> findByEmailWithDetails(@Param("userEmail") String userEmail);
 
+
+    // Custom query to fetch Order, OrderItems, and Variant details for a user
+    @Query("SELECT o FROM Order o JOIN FETCH o.items i JOIN FETCH i.variant v WHERE o.user.email = :userEmail ORDER BY o.createdAt DESC")
+    Page<Order> findByEmailWithDetails(@Param("userEmail") String userEmail, Pageable pageable);
     // ⭐ CORRECTED METHOD: Finds Orders by User's Email (via User object) AND Payment Status
     // This replaces the incorrect 'findByEmailAndPaymentStatus'
     Page<Order> findByUserEmailAndPaymentStatus(String email, String paymentStatus, Pageable pageable);
