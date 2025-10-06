@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Permit all requests to your authentication endpoints and the public sarees endpoint
-                        .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/sarees/**","/api/contact").permitAll()
                         // Permit other public endpoints
                         .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
                         .requestMatchers("/public/**", "/images/**").permitAll()
