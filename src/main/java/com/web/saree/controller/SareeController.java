@@ -33,7 +33,7 @@ public class SareeController {
     private SareeRequest sareeRequest = new SareeRequest ();
 
     @PostMapping("/addSareeDetails")
-    public ResponseEntity<?> addSareeDetails(@RequestBody Map<String, Object> data) {
+    public ResponseEntity<?>    addSareeDetails(@RequestBody Map<String, Object> data) {
         try {
             sareeRequest.setFabrics ((String) data.get ("fabrics"));
             sareeRequest.setDesign ((String) data.get ("design"));
@@ -128,8 +128,6 @@ public class SareeController {
 
         return ResponseEntity.ok(response);
     }
-
-
 
     @GetMapping("/byDiscount")
     public ResponseEntity<List<VariantDto>> getSareesByDiscount() {

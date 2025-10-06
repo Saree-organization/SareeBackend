@@ -196,6 +196,7 @@ public class PaymentController {
             return ResponseEntity.status (HttpStatus.INTERNAL_SERVER_ERROR).body (Map.of ("message", "Failed to fetch orders."));
         }
     }
+
     @GetMapping("/admin-orders")
     public ResponseEntity<?> getAllOrdersForAdmin(
             @RequestParam(defaultValue = "0") int page,
@@ -264,6 +265,69 @@ public class PaymentController {
         }
     }
 
+    @GetMapping("/admin-all-orders")
+    public ResponseEntity<?> getAllOrders(
+
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        try {
+           List<Order> orders = orderRepository.findAll();;
+
+
+            if (status != null && date != null) {
+                LocalDateTime startOfDay = date.atStartOfDay();
+                LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+                orders = orderRepository.findByOrderStatusAndCreatedAtBetween(status, startOfDay, endOfDay);
+            } else if (status != null) {
+                orders = orderRepository.findByOrderStatus(status);
+            } else if (date != null) {
+                LocalDateTime startOfDay = date.atStartOfDay();
+                LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+                orders = orderRepository.findByCreatedAtBetween(startOfDay, endOfDay);
+            } else {
+                orders = orderRepository.findAll();
+            }
+
+
+            List<OrderResponse> orderResponses =orders.stream()
+                    .map(order -> {
+                        OrderResponse orderResponse = new OrderResponse();
+                        orderResponse.setUserId(order.getUser().getId());
+                        orderResponse.setRazorpayOrderId(order.getRazorpayOrderId());
+                        orderResponse.setTotalAmount(order.getTotalAmount());
+                        orderResponse.setPaymentStatus(order.getPaymentStatus());
+                        orderResponse.setOrderStatus(order.getOrderStatus());
+                        orderResponse.setCreatedAt(order.getCreatedAt());
+
+                        List<OrderItemResponse> itemResponses = order.getItems().stream()
+                                .map(item -> {
+                                    OrderItemResponse itemResponse = new OrderItemResponse();
+                                    itemResponse.setProductName(item.getVariant().getName());
+
+                                    List<String> images = item.getVariant().getImages();
+                                    if (images != null && !images.isEmpty()) {
+                                        itemResponse.setImageUrl(images.get(0));
+                                    }
+
+                                    itemResponse.setQuantity(item.getQuantity());
+                                    itemResponse.setPrice(item.getPrice());
+                                    return itemResponse;
+                                })
+                                .collect(Collectors.toList());
+                        orderResponse.setItems(itemResponses);
+                        return orderResponse;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("orders", orderResponses);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to fetch orders."));
+        }
+    }
 
     @GetMapping("/admin/user/{userId}")
     public ResponseEntity<?> getUser(@PathVariable("userId") Long userId) {
@@ -304,7 +368,4 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to cancel order: " + e.getMessage()));
         }
     }
-
-
-
 }
