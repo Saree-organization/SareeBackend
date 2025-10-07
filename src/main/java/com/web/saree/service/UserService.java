@@ -10,10 +10,16 @@ import com.web.saree.entity.Users;
 import com.web.saree.repository.OrderRepository;
 import com.web.saree.repository.UserRepository;
 import lombok.Data;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,15 +41,27 @@ public class UserService {
         return userRepository.findByEmail (email).isPresent ();
     }
 
-    public ResponseEntity<?> findAll() {
-        List<Users> users = userRepository.findAll ();
-        List<UserResponse> responseList = users.stream ()
-                .map (UserResponse::new)
-                .toList ();
+    public ResponseEntity<?> findAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<Users> usersPage = userRepository.findAll(pageable);
 
+        // Convert Users -> UserResponse
+        List<UserResponse> responseList = usersPage
+                .getContent()
+                .stream()
+                .map(UserResponse::new)
+                .toList();
 
-        return ResponseEntity.ok (responseList);
+        // Create response map
+        Map<String, Object> response = new HashMap<> ();
+        response.put("users", responseList);
+        response.put("currentPage", usersPage.getNumber());
+        response.put("totalItems", usersPage.getTotalElements());
+        response.put("totalPages", usersPage.getTotalPages());
+
+        return ResponseEntity.ok(response);
     }
+
 
     public ResponseEntity<?> getOrdersByUserId(Long userId) {
 

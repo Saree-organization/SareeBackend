@@ -21,8 +21,9 @@ public class AdminController {
     private final VariantService variantService;
     private final OrderService orderService;
     @GetMapping("/getAllUsers")
-    public ResponseEntity<?> getAllUsers() {
-        return userService.findAll();
+    public ResponseEntity<?> getAllUsers(@RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "10") int size) {
+        return userService.findAll(page, size);
     }
     @GetMapping("/orders/user/{userId}")
     public ResponseEntity<?> getOrdersByUser(@PathVariable Long userId) {
