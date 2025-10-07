@@ -23,6 +23,7 @@ public class VariantDto {
     private String sareeDesign;
     private String sareeCategory;
 
+    private Integer stock;
     private Long sareeId;
 
     public VariantDto(Variant variant) {
@@ -36,6 +37,8 @@ public class VariantDto {
         this.salesPrice = variant.getSalesPrice();
         this.discountPercent = variant.getDiscountPercent();
         this.priceAfterDiscount = variant.getPriceAfterDiscount();
+
+        this.stock = variant.getStock();
 
 
         if (variant.getSaree() != null) {
