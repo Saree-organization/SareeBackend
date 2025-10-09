@@ -52,7 +52,8 @@ public class ShippingAddressService {
         // अभी के लिए, हम सिर्फ़ मौजूदा फ़ील्ड्स का उपयोग कर रहे हैं।
         // यदि DTO में ID नहीं है, तो फ्रंटएंड काम नहीं करेगा।
 
-        // मान लें कि DTO में ID भी है: response.setId(address.getId());
+        // मान लें कि DTO में ID भी है:
+        response.setId(address.getId());
 
         response.setFullName(address.getFullName());
         response.setStreet(address.getStreet());

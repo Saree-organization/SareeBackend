@@ -25,5 +25,4 @@ public class ShippingAddress {
     private String pincode;
     private String phone;
 
-
 }
