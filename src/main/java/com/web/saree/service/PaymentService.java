@@ -13,6 +13,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger; // New import needed
+import org.slf4j.LoggerFactory; // New import needed
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
+
 
     @Value("${razorpay.key.id}")
     private String keyId;
@@ -33,6 +36,7 @@ public class PaymentService {
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final VariantRepository variantRepository;
+    private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
 
     @Transactional
     public Map<String, Object> createRazorpayOrder(String userEmail, Double amount,Long shippingAddressId) throws RazorpayException {
@@ -55,7 +59,10 @@ public class PaymentService {
         newOrder.setOrderStatus("Created");
 
         // 💡 NOTE: You should set ShippingAddress ID here if the field exists on Order entity
-        // (e.g., newOrder.setShippingAddressId(shippingAddressId);)
+        logger.info("Setting Shipping Address ID on newOrder object: {}", shippingAddressId);
+
+
+        newOrder.setShippingAddressId(shippingAddressId);
 
 
 
