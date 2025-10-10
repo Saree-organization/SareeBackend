@@ -60,25 +60,37 @@ public class AuthController {
             return ResponseEntity.status(500).body(Map.of("message", "An error occurred: " + e.getMessage()));
         }
     }
+
     @PostMapping("/verify-otp-register")
     public ResponseEntity<?> verifyOtpRegister(@RequestBody VerifyOtpRequest request) {
         try {
-            String jwt = otpService.verifyOtpAndGenerateToken(request.getEmail(), request.getOtp());
-            return ResponseEntity.ok(Map.of("message", "OTP verified successfully!", "token", jwt));
+            // ✨ FIX: Use the method that returns token AND role
+            Map<String, String> result = otpService.verifyOtpAndGenerateTokenAndRole(request.getEmail(), request.getOtp());
+
+            // Send both token and role to the frontend
+            return ResponseEntity.ok(Map.of(
+                    "message", "Registration successful! Auto-logging you in.",
+                    "token", result.get("token"),
+                    "role", result.get("role")
+            ));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("message", "An unexpected error occurred."));
         }
     }
-
     @CrossOrigin(origins = {"http://localhost:8080", "http://localhost:3000"})
-    // Replace with your React app's URL
     @PostMapping("/verify-otp-login")
     public ResponseEntity<?> verifyOtpLogin(@RequestBody VerifyOtpRequest request) {
         try {
-            String jwt = otpService.verifyOtpAndGenerateToken(request.getEmail(), request.getOtp());
-            return ResponseEntity.ok(Map.of("message", "OTP verified successfully!", "token", jwt));
+            Map<String, String> result = otpService.verifyOtpAndGenerateTokenAndRole(request.getEmail(), request.getOtp());
+
+            // Send both token and role to the frontend
+            return ResponseEntity.ok(Map.of(
+                    "message", "OTP verified successfully!",
+                    "token", result.get("token"),
+                    "role", result.get("role") // Returning the user's role
+            ));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
