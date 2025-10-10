@@ -1,5 +1,3 @@
-// File: com/web/saree/security/JwtUtils.java
-
 package com.web.saree.security;
 
 import io.jsonwebtoken.*;
@@ -29,24 +27,32 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 
-    public String generateTokenFromEmail(String email) { // Changed method name and parameter
+    // ✨ UPDATED: Added role parameter and included it in Claims
+    public String generateTokenFromEmailAndRole(String email, String role) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role); // Saving the role in JWT payload
+
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(email) // Changed to use email
+                .setSubject(email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime() + jwtExpirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String getEmailFromToken(String token) { // Changed method name
+    public String getEmailFromToken(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    // ✨ ADDED: Method to extract role from the token
+    public String getRoleFromToken(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
         try {
-            final String email = getEmailFromToken(token); // Changed method call
+            final String email = getEmailFromToken(token);
             return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
         } catch (Exception e) {
             System.err.println("Token validation failed: " + e.getMessage());
@@ -74,20 +80,8 @@ public class JwtUtils {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-        } catch (ExpiredJwtException e) {
-            System.err.println("JWT token is expired: " + e.getMessage());
-            throw e;
-        } catch (UnsupportedJwtException e) {
-            System.err.println("JWT token is unsupported: " + e.getMessage());
-            throw e;
-        } catch (MalformedJwtException e) {
-            System.err.println("Invalid JWT token: " + e.getMessage());
-            throw e;
-        } catch (SignatureException e) {
-            System.err.println("Invalid JWT signature: " + e.getMessage());
-            throw e;
-        } catch (IllegalArgumentException e) {
-            System.err.println("JWT claims string is empty: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("JWT processing error: " + e.getMessage());
             throw e;
         }
     }

@@ -25,8 +25,10 @@ public class Users {
     @Column(unique = true, nullable = false)
     private String email;
 
-    private String otp;
 
+    private String otp;
+    @Column(nullable = false)
+    private String role = "USER";
     private LocalDateTime otpGeneratedTime;
 
     @OneToMany(mappedBy = "user")

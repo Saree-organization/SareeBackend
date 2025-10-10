@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
@@ -30,6 +32,8 @@ public class OtpService {
         Users user = userRepository.findByEmail(email)
                 .orElse(new Users());
 
+        // Note: user.role will be "USER" by default here if it's a new user
+
         user.setEmail(email);
         user.setOtp(otp);
         user.setOtpGeneratedTime(LocalDateTime.now());
@@ -39,7 +43,8 @@ public class OtpService {
         System.out.println("Generated OTP for " + email + ": " + otp);
     }
 
-    public String verifyOtpAndGenerateToken(String email, String otp) {
+    // This method is used by both Login and Register (for auto-login)
+    public Map<String, String> verifyOtpAndGenerateTokenAndRole(String email, String otp) {
         Optional<Users> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isEmpty()) {
@@ -58,7 +63,15 @@ public class OtpService {
             user.setOtpGeneratedTime(null);
             userRepository.save(user);
 
-            return jwtUtils.generateTokenFromEmail(email);
+            // ✨ FIX: Use the new JwtUtils method to encode the role in the token
+            String token = jwtUtils.generateTokenFromEmailAndRole(user.getEmail(), user.getRole());
+
+            // Prepare Result
+            Map<String, String> result = new HashMap<>();
+            result.put("token", token);
+            result.put("role", user.getRole());
+
+            return result;
         } else {
             throw new RuntimeException("Invalid OTP.");
         }
