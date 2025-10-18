@@ -57,14 +57,7 @@ public class WishlistController {
     @GetMapping
     public ResponseEntity<List<WishlistResponse>> getWishlist() {
         String userEmail = getCurrentUserEmail();
-        List<Wishlist> wishlistItems = wishlistService.getWishlistItems(userEmail);
-
-        // CONVERT THE LIST OF ENTITIES TO A LIST OF DTOs
-        List<WishlistResponse> responseList = wishlistItems.stream()
-                .map(WishlistResponse::new)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(responseList);
+        return wishlistService.getWishlistItems(userEmail);
     }
 
     @GetMapping("/check/{sareeId}")
