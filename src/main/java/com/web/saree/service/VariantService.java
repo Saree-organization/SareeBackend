@@ -36,7 +36,12 @@ public class VariantService {
                 variant.setDiscountPercent(((Number) discountObj).doubleValue());
             }
         }
-        variant.setPriceAfterDiscount(variant.getSalesPrice() * (1 - variant.getDiscountPercent() / 100.0));
+        variant.setPriceAfterDiscount(
+                Double.parseDouble(
+                        String.format("%.2f", variant.getSalesPrice() * (1 - variant.getDiscountPercent() / 100.0))
+                )
+        );
+
 
         Variant updatedVariant =  variantRepository.save(variant);
         return ResponseEntity.ok("Variant updated successfully");

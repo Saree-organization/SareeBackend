@@ -22,8 +22,9 @@ public class Variant {
     private Double salesPrice;
     private Double discountPercent;
     private Double priceAfterDiscount;
-    private String skuCode;
     private Double costPrice;
+
+    private String skuCode;
     private Integer stock;
 
     // Store image/video URLs as JSON or comma-separated strings
@@ -36,5 +37,14 @@ public class Variant {
     @ManyToOne
     @JoinColumn(name = "saree_id")
     private Saree saree;
+
+    @PrePersist
+    @PreUpdate
+    private void roundPrices() {
+        if (salesPrice != null) salesPrice = Math.round(salesPrice * 100.0) / 100.0;
+        if (costPrice != null) costPrice = Math.round(costPrice * 100.0) / 100.0;
+        if (priceAfterDiscount != null) priceAfterDiscount = Math.round(priceAfterDiscount * 100.0) / 100.0;
+    }
+
 
 }
