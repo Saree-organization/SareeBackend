@@ -1,5 +1,6 @@
 package com.web.saree.service;
 
+import com.web.saree.dto.response.WishlistResponse;
 import com.web.saree.entity.Saree;
 import com.web.saree.entity.Users;
 import com.web.saree.entity.Wishlist;
@@ -7,9 +8,11 @@ import com.web.saree.repository.SareeRepository;
 import com.web.saree.repository.UserRepository;
 import com.web.saree.repository.WishlistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class WishlistService {
@@ -50,10 +53,21 @@ public class WishlistService {
     }
 
     // Is method mein badlav kiya gaya hai
-    public List<Wishlist> getWishlistItems(String userEmail) {
+    public ResponseEntity<List<WishlistResponse>> getWishlistItems(String userEmail) {
         Users user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return wishlistRepository.findByUserId(user.getId());
+
+
+        List<Wishlist> wishlistItems =  wishlistRepository.findByUserId(user.getId());
+
+        System.out.println ("wishlistItems: " + wishlistItems);
+        System.out.println ("wishlistItems.size(): " + wishlistItems.size());
+
+        List<WishlistResponse> responseList = wishlistItems.stream()
+                .map(WishlistResponse::new)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(responseList);
     }
 
     public boolean isSareeInWishlist(String userEmail, Long sareeId) {
