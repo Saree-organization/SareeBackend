@@ -45,7 +45,6 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Keep OPTIONS preflight requests permitted
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Your existing rules:
                         .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
