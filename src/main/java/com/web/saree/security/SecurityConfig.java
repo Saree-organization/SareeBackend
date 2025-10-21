@@ -3,12 +3,13 @@ package com.web.saree.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // Make sure this is imported
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer; // Make sure this is imported
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -37,20 +38,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable) // Keep CSRF disabled
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Use the bean below
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Permit all requests to your authentication endpoints and the public sarees endpoint
+                        // Keep OPTIONS preflight requests permitted
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Your existing rules:
                         .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
-                        // Permit other public endpoints
                         .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
                         .requestMatchers("/public/**", "/images/**").permitAll()
                         .requestMatchers("/api/contact/**").permitAll()
-                        // New: Authorize payment endpoints
                         .requestMatchers("/api/payment/**").authenticated()
-                        // Require authentication for all other requests
                         .anyRequest().authenticated()
                 );
 
@@ -65,10 +66,15 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        // Correctly list the origins of your frontend client
-        config.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // --- THIS IS THE CHANGE YOU ASKED FOR ---
+        // Allows any origin, even with credentials set to true
+        config.addAllowedOriginPattern("*");
+        // ----------------------------------------
+
+        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setAllowedMethods(Arrays.asList("*"));
+
         source.registerCorsConfiguration("/**", config);
         return source;
     }
