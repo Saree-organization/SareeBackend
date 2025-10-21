@@ -21,6 +21,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List; // Import List
 
 @Configuration
 @EnableWebSecurity
@@ -44,8 +45,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Keep OPTIONS preflight requests permitted
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
-                        
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // Your existing rules:
                         .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
                         .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
@@ -66,15 +67,13 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        
-        // --- THIS IS THE CHANGE YOU ASKED FOR ---
-        // Allows any origin, even with credentials set to true
-        config.addAllowedOriginPattern("*"); 
-        // ----------------------------------------
-        
-        config.setAllowedHeaders(Arrays.asList("*"));
-        config.setAllowedMethods(Arrays.asList("*"));
-        
+
+        // This correctly allows all origins when using credentials
+        config.addAllowedOriginPattern("*");
+
+        config.setAllowedHeaders(List.of("*")); // Use List.of("*")
+        config.setAllowedMethods(List.of("*")); // Use List.of("*")
+
         source.registerCorsConfiguration("/**", config);
         return source;
     }
