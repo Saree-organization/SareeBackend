@@ -78,7 +78,7 @@ public class AuthController {
             return ResponseEntity.status(500).body(Map.of("message", "An unexpected error occurred."));
         }
     }
-    @CrossOrigin(origins = {"http://localhost:8080", "http://localhost:3000"})
+
     @PostMapping("/verify-otp-login")
     public ResponseEntity<?> verifyOtpLogin(@RequestBody VerifyOtpRequest request) {
         try {
