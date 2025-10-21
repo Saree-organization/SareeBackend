@@ -44,8 +44,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Keep OPTIONS preflight requests permitted
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
+                        
                         // Your existing rules:
                         .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
                         .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
@@ -66,15 +66,15 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-
+        
         // --- THIS IS THE CHANGE YOU ASKED FOR ---
         // Allows any origin, even with credentials set to true
-        config.addAllowedOriginPattern("*");
+        config.addAllowedOriginPattern("*"); 
         // ----------------------------------------
-
+        
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("*"));
-
+        
         source.registerCorsConfiguration("/**", config);
         return source;
     }
