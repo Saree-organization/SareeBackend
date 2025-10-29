@@ -3,7 +3,10 @@ package com.web.saree.controller;
 import com.web.saree.dto.request.VerifyOtpRequest;
 import com.web.saree.service.OtpService;
 import com.web.saree.service.UserService; // Assume you have a UserService for database operations
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -61,16 +64,28 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp-register")
-    public ResponseEntity<?> verifyOtpRegister(@RequestBody VerifyOtpRequest request) {
+    public ResponseEntity<?> verifyOtpRegister(@RequestBody VerifyOtpRequest request, HttpServletResponse response) {
         try {
-            // ✨ FIX: Use the method that returns token AND role
             Map<String, String> result = otpService.verifyOtpAndGenerateTokenAndRole(request.getEmail(), request.getOtp());
 
-            // Send both token and role to the frontend
+            String token = result.get("token");
+            String role = result.get("role");
+
+            // ✨ NEW: JWT को HttpOnly Cookie में सेट करें
+            ResponseCookie cookie = ResponseCookie.from("authToken", token) // Cookie का नाम: authToken
+                    .httpOnly(true)
+                    .secure(true) // AWS पर HTTPS के लिए TRUE
+                    .path("/")
+                    .maxAge(3600 * 24 * 7) // उदाहरण: 7 दिन (या आपके JWT Expiration के अनुसार)
+                    .sameSite("Lax") // CSRF सुरक्षा के लिए
+                    .build();
+
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            // Response Body से 'token' हटा दें
             return ResponseEntity.ok(Map.of(
                     "message", "Registration successful! Auto-logging you in.",
-                    "token", result.get("token"),
-                    "role", result.get("role")
+                    "role", role
             ));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -78,22 +93,48 @@ public class AuthController {
             return ResponseEntity.status(500).body(Map.of("message", "An unexpected error occurred."));
         }
     }
-
     @PostMapping("/verify-otp-login")
-    public ResponseEntity<?> verifyOtpLogin(@RequestBody VerifyOtpRequest request) {
+    public ResponseEntity<?> verifyOtpLogin(@RequestBody VerifyOtpRequest request, HttpServletResponse response) {
         try {
             Map<String, String> result = otpService.verifyOtpAndGenerateTokenAndRole(request.getEmail(), request.getOtp());
 
-            // Send both token and role to the frontend
+            String token = result.get("token");
+            String role = result.get("role");
+
+            // ✨ NEW: JWT को HttpOnly Cookie में सेट करें
+            ResponseCookie cookie = ResponseCookie.from("authToken", token)
+                    .httpOnly(true)
+                    .secure(true) // Production/AWS पर HTTPS के लिए TRUE
+                    .path("/")
+                    .maxAge(3600 * 24 * 7)
+                    .sameSite("Lax")
+                    .build();
+
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            // Response Body से 'token' हटा दें
             return ResponseEntity.ok(Map.of(
                     "message", "OTP verified successfully!",
-                    "token", result.get("token"),
-                    "role", result.get("role") // Returning the user's role
+                    "role", role
             ));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("message", "An unexpected error occurred."));
         }
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        // Expired Cookie सेट करके ब्राउज़र से पुरानी Cookie हटा दें
+        ResponseCookie cookie = ResponseCookie.from("authToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0) // MaxAge को 0 सेट करने से Cookie तुरंत expire हो जाती है
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully!"));
     }
 }
