@@ -52,6 +52,13 @@ public class SecurityConfig {
                         .requestMatchers("/public/**", "/images/**").permitAll()
                         .requestMatchers("/api/contact/**").permitAll()
                         .requestMatchers ("/admin/**").hasRole ("ADMIN")
+                        .requestMatchers ("/sarees/addSareeDetails").hasRole ("ADMIN")
+                        .requestMatchers("/api/payment/admin-all-orders").hasRole("ADMIN")
+                        .requestMatchers("/api/payment/admin-orders").hasRole("ADMIN")
+                        .requestMatchers("/api/payment/admin/user/**").hasRole("ADMIN")
+                        .requestMatchers("/api/payment/admin/user-orders/**").hasRole("ADMIN")
+
+
                         .requestMatchers("/api/payment/**").authenticated()
                         .anyRequest().authenticated()
                 );
