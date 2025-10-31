@@ -140,13 +140,12 @@ public class SareeService {
 
 
     public Page<AllSareeResponse> filterSarees(
-            String fabrics, String category, String color,
-            Double minPrice, Double maxPrice, Double discount,
-            int page, int size
+            String fabrics, String category, String color, Double minPrice, Double maxPrice, Double discount, int page, int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("s.createdAt").descending());
 
         Page<Variant> variantPage = variantRepo.findFilteredVariants(fabrics, category, color, minPrice, maxPrice, discount, pageable );
+        System.out.println (variantPage);
 
         List<AllSareeResponse> responses = variantPage.getContent().stream().map(variant -> {
             Saree saree = variant.getSaree();

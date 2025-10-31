@@ -7,12 +7,14 @@ import com.web.saree.service.VariantService;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
+@PreAuthorize ("hasRole('ADMIN')")
 @RequestMapping("/admin")
 @RequiredArgsConstructor
 public class AdminController {

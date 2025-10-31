@@ -114,7 +114,9 @@ public class SareeController {
             @RequestParam(defaultValue = "10") int size
     ) {
 
+        System.out.println ("fabrics " + fabrics + "\n" + "category " + category + "\n" + "color " + color + "\n" + "minPrice " + minPrice + "\n" + "maxPrice " + maxPrice + "\n" + "discount " + discount + "\n" + "page " + page + "\n" + "size " + size );
         // Call service method that returns Page<AllSareeResponse>
+
         Page<AllSareeResponse> sareePage = sareeService.filterSarees(fabrics, category, color, minPrice, maxPrice, discount, page, size);
 
         // Prepare response
