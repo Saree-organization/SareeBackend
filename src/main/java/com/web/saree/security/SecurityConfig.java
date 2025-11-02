@@ -48,24 +48,24 @@ public class SecurityConfig {
                         // Keep OPTIONS preflight requests permitted
 
                         // General Public/User Endpoints (Remain the same)
-                        .requestMatchers("/api/auth/", "/sarees/").permitAll()
-                        .requestMatchers("/public/", "/images/").permitAll()
-                        .requestMatchers("/api/contact/").permitAll()
+                        .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
+                        .requestMatchers("/public/**", "/images/**").permitAll()
+                        .requestMatchers("/api/contact/**").permitAll()
 
                         // Standard User Endpoints
-                        .requestMatchers("/api/wishlist/","/api/cart/").authenticated()
+                        .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
                         .requestMatchers("/api/payment/create-order", "/api/payment/verify", "/api/payment/orders", "/api/payment/cancel-order").authenticated()
 
                         // 🎯 FIX 1: Admin GET Endpoints - Require ADMIN role
                         // /admin-orders, /admin-all-orders, /admin/user-orders/{userId}, /admin/user/{userId}
-                        .requestMatchers("/api/payment/admin-orders", "/api/payment/admin-all-orders", "/api/payment/admin/user-orders/", "/api/payment/admin/user/").hasRole("ADMIN")
+                        .requestMatchers("/api/payment/admin-orders", "/api/payment/admin-all-orders", "/api/payment/admin/user-orders/**", "/api/payment/admin/user/**").hasRole("ADMIN")
 
                         // 🎯 FIX 2: Admin PUT/POST Endpoints - Require ADMIN role
                         // Status Change API: PUT admin/paymentChangeStatus/{orderIdentifier}/status
-                        .requestMatchers(HttpMethod.PUT, "/admin/paymentChangeStatus/").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/admin/paymentChangeStatus/**").hasRole("ADMIN")
 
                         // Mark Paid & Ship API: POST /api/payment/admin/mark-paid-and-ship/{orderId}
-                        .requestMatchers(HttpMethod.POST, "/api/payment/admin/mark-paid-and-ship/").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/payment/admin/mark-paid-and-ship/**").hasRole("ADMIN")
 
                         // All other requests must be authenticated (as a fallback)
                         .anyRequest().authenticated()
@@ -86,10 +86,10 @@ public class SecurityConfig {
         // This correctly allows all origins when using credentials
         config.addAllowedOriginPattern("*");
 
-        config.setAllowedHeaders(List.of("")); // Use List.of("")
-        config.setAllowedMethods(List.of("")); // Use List.of("")
+        config.setAllowedHeaders(List.of("*")); // Use List.of("*")
+        config.setAllowedMethods(List.of("*")); // Use List.of("*")
 
-        source.registerCorsConfiguration("/", config);
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 
