@@ -9,4 +9,5 @@ public class PaymentRequest {
     private Double amount;
     @JsonProperty("shippingAddressId")
     private Long shippingAddressId;
+    private String paymentMethod;
 }

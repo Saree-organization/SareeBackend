@@ -41,33 +41,49 @@ public class PaymentController {
     private final OrderRepository orderRepository;
     private final UserService userService;
 
-    // ******************************************************
-    // *** यहाँ बदलाव किया गया है: shippingAddressId को पास करना ***
-    // ******************************************************
+    /**
+     * Handles order creation for both COD and Online payments.
+     */
     @PostMapping("/create-order")
     public ResponseEntity<?> createOrder(@RequestBody PaymentRequest request, @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
             if (userDetails == null) {
-                return ResponseEntity.status (HttpStatus.UNAUTHORIZED).body ("User not authenticated.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
             }
 
+            // 🎯 COD CHANGES 1: Check Payment Method from Frontend
+            if ("COD".equalsIgnoreCase(request.getPaymentMethod())) {
+                // Case 1: Cash on Delivery (COD)
+                Order codOrder = paymentService.createCodOrder(
+                        userDetails.getUsername(),
+                        request.getAmount(),
+                        request.getShippingAddressId()
+                );
 
-            // service method को अब shippingAddressId भी pass करना होगा
-            Map<String, Object> orderDetails = paymentService.createRazorpayOrder (
-                    userDetails.getUsername (),
-                    request.getAmount (),
-                    request.getShippingAddressId()
-                    // PaymentRequest DTO से ID को पास करें
-            );
+                // Return Internal ID for client-side tracking
+                return ResponseEntity.ok(Map.of(
+                        "message", "COD Order placed successfully.",
+                        "orderId", codOrder.getId(), // Internal ID
+                        "paymentMethod", "COD",
+                        "totalAmount", codOrder.getTotalAmount()
+                ));
 
-            return ResponseEntity.ok (orderDetails);
+            } else {
+                // Case 2: Online Payment (Razorpay)
+                Map<String, Object> orderDetails = paymentService.createRazorpayOrder(
+                        userDetails.getUsername(),
+                        request.getAmount(),
+                        request.getShippingAddressId()
+                );
+                return ResponseEntity.ok(orderDetails);
+            }
+
         } catch (RazorpayException e) {
-            return ResponseEntity.status (HttpStatus.BAD_REQUEST).body (Map.of ("message", "Razorpay Error: " + e.getMessage ()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Razorpay Error: " + e.getMessage()));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status (HttpStatus.BAD_REQUEST).body (Map.of ("message", e.getMessage ()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
         }
     }
-    // ******************************************************
 
     @PostMapping("/verify")
     public ResponseEntity<?> verifyPayment(@RequestBody PaymentVerificationRequest request) {
@@ -90,6 +106,9 @@ public class PaymentController {
 
     }
 
+    /**
+     * Retrieves all orders for the authenticated user, regardless of payment status.
+     */
     @GetMapping("/orders")
     public ResponseEntity<?> getOrders(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -104,15 +123,20 @@ public class PaymentController {
 
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-            Page<Order> orderPage = orderRepository.findByUserEmailAndPaymentStatus(
+            // 🎯 COD CHANGES 2: Use the method to fetch ALL orders (Online and COD)
+            Page<Order> orderPage = orderRepository.findByUserEmailOrderByCreatedAtDesc(
                     userDetails.getUsername(),
-                    "Success",
                     pageable
             );
 
             List<OrderResponse> orderResponses = orderPage.getContent().stream()
                     .map(order -> {
                         OrderResponse orderResponse = new OrderResponse();
+
+                        // 🎯 COD CHANGES 3: Map Internal ID and Payment Method
+                        orderResponse.setId(order.getId()); // Internal ID
+                        orderResponse.setPaymentMethod(order.getPaymentMethod()); // "COD" or "ONLINE"
+
                         orderResponse.setRazorpayOrderId(order.getRazorpayOrderId());
                         orderResponse.setTotalAmount(order.getTotalAmount());
                         orderResponse.setPaymentStatus(order.getPaymentStatus());
@@ -172,6 +196,10 @@ public class PaymentController {
             List<OrderResponse> orderResponses = ordersPage.getContent().stream()
                     .map(order -> {
                         OrderResponse orderResponse = new OrderResponse();
+                        // 🎯 Map Internal ID and Payment Method for admin view as well
+                        orderResponse.setId(order.getId());
+                        orderResponse.setPaymentMethod(order.getPaymentMethod());
+
                         orderResponse.setRazorpayOrderId(order.getRazorpayOrderId());
                         orderResponse.setTotalAmount(order.getTotalAmount());
                         orderResponse.setPaymentStatus(order.getPaymentStatus());
@@ -250,6 +278,10 @@ public class PaymentController {
                         orderResponse.setOrderStatus(order.getOrderStatus());
                         orderResponse.setCreatedAt(order.getCreatedAt());
 
+                        // 🎯 Map Internal ID and Payment Method for admin view
+                        orderResponse.setId(order.getId());
+                        orderResponse.setPaymentMethod(order.getPaymentMethod());
+
                         List<OrderItemResponse> itemResponses = order.getItems().stream()
                                 .map(item -> {
                                     OrderItemResponse itemResponse = new OrderItemResponse();
@@ -290,7 +322,7 @@ public class PaymentController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         try {
-           List<Order> orders = orderRepository.findAll();;
+            List<Order> orders = orderRepository.findAll();;
 
 
             if (status != null && date != null) {
@@ -317,6 +349,10 @@ public class PaymentController {
                         orderResponse.setPaymentStatus(order.getPaymentStatus());
                         orderResponse.setOrderStatus(order.getOrderStatus());
                         orderResponse.setCreatedAt(order.getCreatedAt());
+
+                        // 🎯 Map Internal ID and Payment Method for admin view
+                        orderResponse.setId(order.getId());
+                        orderResponse.setPaymentMethod(order.getPaymentMethod());
 
                         List<OrderItemResponse> itemResponses = order.getItems().stream()
                                 .map(item -> {
@@ -366,21 +402,43 @@ public class PaymentController {
                     .body(Map.of("message", "Failed to fetch user."));
         }
     }
+
+    /**
+     * 🎯 NEW COD ADMIN API: Marks a PENDING COD order as Paid (Success) and sets status to Shipping.
+     */
+    @PostMapping("/admin/mark-paid-and-ship/{orderId}")
+    public ResponseEntity<?> markPaidAndShip(@PathVariable Long orderId) {
+        try {
+            paymentService.markOrderPaidAndShip(orderId);
+            return ResponseEntity.ok(Map.of("message", "Order marked as Paid and Shipped."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to process COD order: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Order cancellation, accepting either Internal Order ID (for COD) or Razorpay ID (for Online).
+     */
     @PostMapping("/cancel-order")
     public ResponseEntity<?> cancelOrder(@RequestBody Map<String, String> request) {
         try {
-            String razorpayOrderId = request.get("razorpayOrderId");
+            // 🎯 COD CHANGES 4: Now expecting 'orderIdentifier' instead of just 'razorpayOrderId'
+            String orderIdentifier = request.get("orderIdentifier"); // Frontend must send this
 
-            if (razorpayOrderId == null || razorpayOrderId.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Razorpay Order ID is missing."));
+            if (orderIdentifier == null || orderIdentifier.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Order Identifier (Internal ID or Razorpay ID) is missing."));
             }
 
+            // The service layer will determine the type of ID and perform the cancellation.
+            paymentService.updateOrderStatusToCancelled(orderIdentifier);
 
-            paymentService.updateOrderStatusToCancelled(razorpayOrderId);
-
-            return ResponseEntity.ok(Map.of("message", "Order " + razorpayOrderId + " successfully marked as Cancelled."));
+            return ResponseEntity.ok(Map.of("message", "Order " + orderIdentifier + " successfully marked as Cancelled."));
         } catch (IllegalArgumentException e) {
-            // यह तब थ्रो होगा जब orderId नहीं मिलेगा
+            // This is thrown when the order is not found by the identifier
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Failed to cancel order: " + e.getMessage()));
