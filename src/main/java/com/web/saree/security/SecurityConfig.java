@@ -1,6 +1,7 @@
 package com.web.saree.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+//import org.context.annotation.Bean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod; // Make sure this is imported
@@ -46,12 +47,27 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Keep OPTIONS preflight requests permitted
 
-                        // Your existing rules:
+                        // General Public/User Endpoints (Remain the same)
                         .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
-                        .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
                         .requestMatchers("/public/**", "/images/**").permitAll()
                         .requestMatchers("/api/contact/**").permitAll()
-                        .requestMatchers("/api/payment/**").authenticated()
+
+                        // Standard User Endpoints
+                        .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
+                        .requestMatchers("/api/payment/create-order", "/api/payment/verify", "/api/payment/orders", "/api/payment/cancel-order").authenticated()
+
+                        // 🎯 FIX 1: Admin GET Endpoints - Require ADMIN role
+                        // /admin-orders, /admin-all-orders, /admin/user-orders/{userId}, /admin/user/{userId}
+                        .requestMatchers("/api/payment/admin-orders", "/api/payment/admin-all-orders", "/api/payment/admin/user-orders/**", "/api/payment/admin/user/**").hasRole("ADMIN")
+
+                        // 🎯 FIX 2: Admin PUT/POST Endpoints - Require ADMIN role
+                        // Status Change API: PUT admin/paymentChangeStatus/{orderIdentifier}/status
+                        .requestMatchers(HttpMethod.PUT, "/admin/paymentChangeStatus/**").hasRole("ADMIN")
+
+                        // Mark Paid & Ship API: POST /api/payment/admin/mark-paid-and-ship/{orderId}
+                        .requestMatchers(HttpMethod.POST, "/api/payment/admin/mark-paid-and-ship/**").hasRole("ADMIN")
+
+                        // All other requests must be authenticated (as a fallback)
                         .anyRequest().authenticated()
                 );
 

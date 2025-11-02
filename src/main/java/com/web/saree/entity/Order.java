@@ -26,7 +26,7 @@ public class Order {
     private Users user;
 
     private Double totalAmount;
-
+    private String paymentMethod; //"Online","COD"
     private String paymentStatus; // "Pending", "Success", "Failed"
     private String orderStatus;// "Shipping, "OutOf Delivery, Delivered, Exchange,Exchanged"
 
