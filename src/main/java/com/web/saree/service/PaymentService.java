@@ -10,11 +10,11 @@ import com.web.saree.entity.Users;
 import com.web.saree.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger; // New import needed
-import org.slf4j.LoggerFactory; // New import needed
 
 import java.util.List;
 import java.util.Map;
@@ -38,6 +38,10 @@ public class PaymentService {
     private final VariantRepository variantRepository;
     private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
 
+    // ----------------------------------------------------------------------------------
+    //                             1. ONLINE PAYMENT LOGIC (Updated to set PaymentMethod)
+    // ----------------------------------------------------------------------------------
+
     @Transactional
     public Map<String, Object> createRazorpayOrder(String userEmail, Double amount,Long shippingAddressId) throws RazorpayException {
         RazorpayClient razorpayClient = new RazorpayClient(keyId, keySecret);
@@ -58,7 +62,9 @@ public class PaymentService {
         newOrder.setPaymentStatus("Created");
         newOrder.setOrderStatus("Created");
 
-        // 💡 NOTE: You should set ShippingAddress ID here if the field exists on Order entity
+        // 🎯 COD CHANGES 1: Set Payment Method for Online
+        newOrder.setPaymentMethod("ONLINE");
+
         logger.info("Setting Shipping Address ID on newOrder object: {}", shippingAddressId);
 
 
@@ -99,6 +105,103 @@ public class PaymentService {
         );
     }
 
+    // ----------------------------------------------------------------------------------
+    //                             2. CASH ON DELIVERY (COD) LOGIC
+    // ----------------------------------------------------------------------------------
+
+    /**
+     * Creates a COD order, sets paymentStatus to PENDING.
+     */
+    @Transactional
+    public com.web.saree.entity.Order createCodOrder(String email, Double amount, Long shippingAddressId) {
+
+        // 1. Fetch User and Cart items
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + email));
+
+        List<CartItem> cartItems = cartItemRepository.findByUserEmail(email);
+
+        if (cartItems.isEmpty() || amount <= 0) {
+            throw new IllegalArgumentException("Cart is empty or order amount is zero.");
+        }
+
+        // 2. Create Order Entity
+        com.web.saree.entity.Order order = new com.web.saree.entity.Order();
+        order.setUser(user);
+        order.setTotalAmount(amount);
+        order.setShippingAddressId(shippingAddressId);
+
+        // 🎯 COD CHANGES 2: Set COD status
+        order.setPaymentMethod("COD");
+        order.setPaymentStatus("PENDING"); // Payment upon delivery
+        order.setOrderStatus("NEW"); // Initial order status
+
+        // 3. Map Cart Items to Order Items
+        List<OrderItem> orderItems = cartItems.stream()
+                .map(cartItem -> {
+                    OrderItem orderItem = new OrderItem();
+                    orderItem.setOrder(order);
+                    orderItem.setVariant(cartItem.getVariant());
+                    orderItem.setQuantity(cartItem.getQuantity());
+                    orderItem.setPrice(cartItem.getVariant().getPriceAfterDiscount());
+                    return orderItem;
+                })
+                .collect(Collectors.toList());
+
+        order.setItems(orderItems);
+
+        // 4. Save Order
+        com.web.saree.entity.Order savedOrder = orderRepository.save(order);
+
+        // 5. Clear Cart
+        cartItemRepository.deleteAll(cartItemRepository.findByUserEmail(email));
+
+        return savedOrder;
+    }
+
+    // ----------------------------------------------------------------------------------
+    // 🎯 NEW ADMIN LOGIC: Mark COD Order Paid and Ship
+    // ----------------------------------------------------------------------------------
+
+    /**
+     * Marks a COD order as paid and transitions its status to 'Shipping'.
+     * This is manually triggered by the admin upon cash remittance confirmation.
+     */
+    @Transactional
+    public void markOrderPaidAndShip(Long orderId) {
+        com.web.saree.entity.Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found with ID: " + orderId));
+
+        if (!"COD".equals(order.getPaymentMethod())) {
+            throw new IllegalStateException("Order is not a COD order.");
+        }
+
+        // Check for NEW or PENDING status before processing
+        if (!"PENDING".equals(order.getPaymentStatus()) && !"NEW".equals(order.getOrderStatus())) {
+            throw new IllegalStateException("Order payment is already processed or the order is not ready for shipping.");
+        }
+
+        // Stock deduction logic (Performed here for COD orders, as stock is reserved, not deducted at checkout)
+        for (OrderItem item : order.getItems()) {
+            com.web.saree.entity.Variant variant = item.getVariant();
+            int orderedQuantity = item.getQuantity();
+
+            if (variant.getStock() < orderedQuantity) {
+                // Essential stock validation
+                throw new IllegalStateException("Insufficient stock for product: " + variant.getName());
+            }
+
+            variant.setStock(variant.getStock() - orderedQuantity);
+            variantRepository.save(variant);
+        }
+
+        // Update payment and order status
+        order.setPaymentStatus("Success"); // Payment is confirmed
+        order.setOrderStatus("Shipping");
+        orderRepository.save(order);
+    }
+
+
     @Transactional
     public boolean verifyPayment(String razorpayOrderId, String razorpayPaymentId, String razorpaySignature) throws RazorpayException {
         com.web.saree.entity.Order order = orderRepository.findByRazorpayOrderId(razorpayOrderId)
@@ -113,7 +216,7 @@ public class PaymentService {
         boolean isVerified = Utils.verifyPaymentSignature(options, keySecret);
 
         if (isVerified) {
-            // Stock deduction logic
+            // Stock deduction logic (Correct for online paid orders)
             for (OrderItem item : order.getItems()) {
                 com.web.saree.entity.Variant variant = item.getVariant();
                 int orderedQuantity = item.getQuantity();
@@ -144,14 +247,44 @@ public class PaymentService {
         }
     }
 
-    // FIX: Payment Dismissal/Cancellation Logic
-    @Transactional
-    public void updateOrderStatusToCancelled(String razorpayOrderId) {
-        com.web.saree.entity.Order order = orderRepository.findByRazorpayOrderId(razorpayOrderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found with Razorpay ID: " + razorpayOrderId));
+    // ----------------------------------------------------------------------------------
+    //                             3. CANCELLATION LOGIC
+    // ----------------------------------------------------------------------------------
 
-        // Only cancel if it's not already successful
-        if (!"Success".equalsIgnoreCase(order.getPaymentStatus())) {
+    /**
+     * Order Cancellation Logic updated to handle Internal ID (for COD)
+     * or Razorpay ID (for Online) passed as 'orderIdentifier', and includes stock refund.
+     */
+    @Transactional
+    public void updateOrderStatusToCancelled(String orderIdentifier) {
+        com.web.saree.entity.Order order = null;
+
+        // 1. Try finding by Internal Order ID (Long ID)
+        try {
+            Long id = Long.parseLong(orderIdentifier);
+            order = orderRepository.findById(id).orElse(null);
+        } catch (NumberFormatException e) {
+            // If not a Long, proceed to search by Razorpay ID
+        }
+
+        // 2. If not found by Internal ID, find by Razorpay ID
+        if (order == null) {
+            order = orderRepository.findByRazorpayOrderId(orderIdentifier)
+                    .orElseThrow(() -> new IllegalArgumentException("Order not found with identifier: " + orderIdentifier));
+        }
+
+        // Only cancel if it's not already successful or cancelled
+        if (!"Success".equalsIgnoreCase(order.getPaymentStatus()) && !"Cancelled".equalsIgnoreCase(order.getOrderStatus())) {
+
+            // Stock refund logic
+            for (OrderItem item : order.getItems()) {
+                com.web.saree.entity.Variant variant = item.getVariant();
+                // Add stock back to inventory
+                variant.setStock(variant.getStock() + item.getQuantity());
+                variantRepository.save(variant);
+            }
+
+            // Update order status
             order.setPaymentStatus("Cancelled");
             order.setOrderStatus("Cancelled");
 

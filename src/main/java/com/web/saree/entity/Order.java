@@ -27,6 +27,9 @@ public class Order {
 
     private Double totalAmount;
 
+    // 🎯 COD FIX: New field to distinguish between "COD" and "ONLINE" payments
+    private String paymentMethod;
+
     private String paymentStatus; // "Pending", "Success", "Failed"
     private String orderStatus;// "Shipping, "OutOf Delivery, Delivered, Exchange,Exchanged"
 

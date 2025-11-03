@@ -16,19 +16,27 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // Finds an Order by its Razorpay Order ID
     Optional<Order> findByRazorpayOrderId(String razorpayOrderId);
 
-    // Finds Orders by User Email, ordered by creation date descending
+    // Finds Orders by User Email, ordered by creation date descending (List version)
     List<Order> findByUserEmailOrderByCreatedAtDesc(String userEmail);
+
+    // 🎯 FINAL FIX: Replacing convention-based naming with explicit @Query for Paged fetching.
+    // This resolves the runtime error "No property 'paged' found".
+    /**
+     * Retrieves ALL Orders for a user, ordered by creation date (Paged version).
+     */
+    @Query("SELECT o FROM Order o JOIN FETCH o.user u WHERE u.email = :userEmail ORDER BY o.createdAt DESC")
+    Page<Order> findOrdersByUserEmailPaged(@Param("userEmail") String userEmail, Pageable pageable);
 
     // Custom query to fetch Order, OrderItems, and Variant details for a user
     @Query("SELECT o FROM Order o JOIN FETCH o.items i JOIN FETCH i.variant v WHERE o.user.email = :userEmail ORDER BY o.createdAt DESC")
     List<Order> findByEmailWithDetails(@Param("userEmail") String userEmail);
 
 
-    // Custom query to fetch Order, OrderItems, and Variant details for a user
+    // Custom query to fetch Order, OrderItems, and Variant details for a user (Note: This custom query also needs a JOIN FETCH)
     @Query("SELECT o FROM Order o JOIN FETCH o.items i JOIN FETCH i.variant v WHERE o.user.email = :userEmail ORDER BY o.createdAt DESC")
     Page<Order> findByEmailWithDetails(@Param("userEmail") String userEmail, Pageable pageable);
+
     // ⭐ CORRECTED METHOD: Finds Orders by User's Email (via User object) AND Payment Status
-    // This replaces the incorrect 'findByEmailAndPaymentStatus'
     Page<Order> findByUserEmailAndPaymentStatus(String email, String paymentStatus, Pageable pageable);
 
     Page<Order> findByOrderStatus(String status, Pageable pageable);
