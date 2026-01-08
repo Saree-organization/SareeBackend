@@ -47,7 +47,8 @@ public class SecurityConfig {
                         // Keep OPTIONS preflight requests permitted
                         // Your existing rules:
                         .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
-                        .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
+                        .requestMatchers("/api/wishlist/**","/api/cart/**","/actuator/health",
+                                "/").authenticated()
                         .requestMatchers("/public/**", "/images/**").permitAll()
                         .requestMatchers("/api/contact/**").permitAll()
                         .requestMatchers ("/admin/**").hasRole ("ADMIN")
