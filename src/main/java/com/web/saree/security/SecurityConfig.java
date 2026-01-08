@@ -45,7 +45,6 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Keep OPTIONS preflight requests permitted
-
                         // Your existing rules:
                         .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
                         .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
@@ -57,8 +56,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/payment/admin-orders").hasRole("ADMIN")
                         .requestMatchers("/api/payment/admin/user/**").hasRole("ADMIN")
                         .requestMatchers("/api/payment/admin/user-orders/**").hasRole("ADMIN")
-
-
                         .requestMatchers("/api/payment/**").authenticated()
                         .anyRequest().authenticated()
                 );

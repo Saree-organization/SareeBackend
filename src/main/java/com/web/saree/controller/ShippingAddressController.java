@@ -23,7 +23,7 @@ public class ShippingAddressController {
     private ShippingAddressService addressService;
 
     @Autowired
-    private UserService userService; // वर्तमान लॉगिन किए गए User को प्राप्त करने के लिए
+    private UserService userService;
 
     /**
      * GET /api/user/addresses
