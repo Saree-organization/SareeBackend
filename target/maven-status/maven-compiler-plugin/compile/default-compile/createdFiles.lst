@@ -17,6 +17,7 @@ com\web\saree\entity\Review.class
 com\web\saree\dto\response\UserResponse.class
 com\web\saree\controller\CartController.class
 com\web\saree\service\WishlistService.class
+com\web\saree\controller\HealthController.class
 com\web\saree\controller\UsersController.class
 com\web\saree\security\SecurityConfig.class
 com\web\saree\service\PaymentService.class
