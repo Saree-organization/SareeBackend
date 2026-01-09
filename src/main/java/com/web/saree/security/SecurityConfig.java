@@ -46,9 +46,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Keep OPTIONS preflight requests permitted
                         // Your existing rules:
-                        .requestMatchers("/api/auth/**", "/sarees/**").permitAll()
-                        .requestMatchers("/api/wishlist/**","/api/cart/**","/actuator/health",
-                                "/").authenticated()
+                        .requestMatchers("/api/auth/**", "/sarees/**", "/api/health", "/").permitAll()
+                        .requestMatchers("/api/wishlist/**","/api/cart/**").authenticated()
                         .requestMatchers("/public/**", "/images/**").permitAll()
                         .requestMatchers("/api/contact/**").permitAll()
                         .requestMatchers ("/admin/**").hasRole ("ADMIN")
