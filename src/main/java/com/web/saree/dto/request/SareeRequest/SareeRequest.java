@@ -18,18 +18,4 @@ public class SareeRequest {
 
     private List<VariantRequest> variants = new ArrayList<> ();
 
-
-    @Override
-    public String toString() {
-        return "SareeRequest{" +
-                "fabrics='" + fabrics + '\'' +
-                ", design='" + design + '\'' +
-                ", length=" + length +
-                ", description='" + description + '\'' +
-                ", border='" + border + '\'' +
-                ", category='" + category + '\'' +
-                ", weight=" + weight +
-                ", variants=" + variants +
-                '}';
-    }
 }
