@@ -12,7 +12,12 @@ public class HealthController {
     }
 
     @GetMapping("/api/health")
-    public String health() {
-        return "OK";
+    public String health1() {
+        return "Saree Backend is Live";
+    }
+
+    @GetMapping("/health")
+    public String health2() {
+        return "Saree Backend is Live";
     }
 }
