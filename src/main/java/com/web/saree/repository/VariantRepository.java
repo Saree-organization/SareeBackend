@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 
@@ -15,6 +16,7 @@ import java.util.List;
 public interface VariantRepository extends JpaRepository<Variant, Long> {
 
     List<Variant> findBySareeId(Long sareeId);
+
     Variant findTop1ByDiscountPercentGreaterThanAndDiscountPercentLessThanOrderByDiscountPercentDesc(
             Double greater,
             Double lesser
@@ -22,15 +24,21 @@ public interface VariantRepository extends JpaRepository<Variant, Long> {
 
 
     @Query("""
-       SELECT v FROM Variant v
-       JOIN v.saree s
-       WHERE (:fabrics IS NULL OR s.fabrics = :fabrics)
-         AND (:category IS NULL OR s.category = :category)
-         AND (:color IS NULL OR v.color = :color)
-         AND (:minPrice IS NULL OR v.priceAfterDiscount >= :minPrice)
-         AND (:maxPrice IS NULL OR v.priceAfterDiscount <= :maxPrice)
-         AND (:discountPercent IS NULL OR v.discountPercent <= :discountPercent)
-       """)
+               SELECT v FROM Variant v
+               JOIN v.saree s
+               WHERE (:fabrics IS NULL 
+                      OR LOWER(s.fabrics) LIKE LOWER(CONCAT('%', :fabrics, '%')))
+                 AND (:category IS NULL 
+                      OR LOWER(s.category) LIKE LOWER(CONCAT('%', :category, '%')))
+                 AND (:color IS NULL 
+                      OR LOWER(v.color) LIKE LOWER(CONCAT('%', :color, '%')))
+                 AND (:minPrice IS NULL 
+                      OR v.priceAfterDiscount >= :minPrice)
+                 AND (:maxPrice IS NULL 
+                      OR v.priceAfterDiscount <= :maxPrice)
+                 AND (:discountPercent IS NULL 
+                      OR v.discountPercent <= :discountPercent)
+            """)
     Page<Variant> findFilteredVariants(@Param("fabrics") String fabrics, @Param("category") String category,
 
                                        @Param("color") String color, @Param("minPrice") Double minPrice,

@@ -1,13 +1,9 @@
 package com.web.saree.controller;
 
 import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import com.web.saree.dto.request.SareeRequest.SareeRequest;
-import com.web.saree.dto.request.SareeRequest.VariantRequest;
 import com.web.saree.dto.response.VariantDto;
 import com.web.saree.dto.response.sareeResponse.AllSareeResponse;
-import com.web.saree.entity.Saree;
-import com.web.saree.entity.Variant;
 import com.web.saree.service.SareeService;
 import com.web.saree.service.VariantService;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,8 +109,6 @@ public class SareeController {
             @RequestParam(defaultValue = "10") int size
     ) {
 
-        System.out.println ("fabrics " + fabrics + "\n" + "category " + category + "\n" + "color " + color + "\n" + "minPrice " + minPrice + "\n" + "maxPrice " + maxPrice + "\n" + "discount " + discount + "\n" + "page " + page + "\n" + "size " + size );
-        // Call service method that returns Page<AllSareeResponse>
 
         Page<AllSareeResponse> sareePage = sareeService.filterSarees(fabrics, category, color, minPrice, maxPrice, discount, page, size);
 
